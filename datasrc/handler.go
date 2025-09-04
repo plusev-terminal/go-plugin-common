@@ -1,6 +1,8 @@
 package datasrc
 
 import (
+	"fmt"
+
 	"github.com/extism/go-pdk"
 	dt "github.com/plusev-terminal/go-plugin-common/datasrc/types"
 )
@@ -19,8 +21,14 @@ type DataSource interface {
 	// GetOHLCV fetches historical OHLCV data for the given parameters
 	GetOHLCV(params dt.OHLCVParams) ([]dt.OHLCVRecord, error)
 
-	// StartStream starts streaming live data (optional, return error if not supported)
-	StartStream(config dt.StreamConfig) error
+	// PrepareStream prepares streaming connection setup
+	PrepareStream(config dt.StreamConfig) (dt.StreamSetup, error)
+
+	// HandleStreamMessage processes incoming stream messages
+	HandleStreamMessage(message dt.StreamMessage) (dt.StreamResponse, error)
+
+	// HandleConnectionEvent handles stream connection events
+	HandleConnectionEvent(event dt.ConnectionEvent) (dt.ConnectionResponse, error)
 
 	// SupportsStreaming returns true if this data source supports real-time streaming
 	SupportsStreaming() bool
@@ -78,19 +86,65 @@ func (h *PluginHandler) ExportGetOHLCV() int32 {
 	return ExportOHLCV(data, err)
 }
 
-// ExportStreamOHLCV implements the stream_ohlcv export function
+// ExportStreamOHLCV implements the stream_ohlcv export function (DEPRECATED)
 func (h *PluginHandler) ExportStreamOHLCV() int32 {
+	// This is now deprecated - use the new callback-based system
+	pdk.SetError(fmt.Errorf("stream_ohlcv is deprecated - use prepare_stream, handle_stream_message, and stream_connection_event"))
+	return 1
+}
+
+// ExportPrepareStream implements the prepare_stream export function
+func (h *PluginHandler) ExportPrepareStream() int32 {
 	config, err := GetStreamConfig()
 	if err != nil {
 		pdk.SetError(err)
 		return 1
 	}
 
-	err = h.DataSource.StartStream(config)
+	setup, err := h.DataSource.PrepareStream(config)
 	if err != nil {
 		pdk.SetError(err)
 		return 1
 	}
 
+	pdk.OutputJSON(setup)
+	return 0
+}
+
+// ExportHandleStreamMessage implements the handle_stream_message export function
+func (h *PluginHandler) ExportHandleStreamMessage() int32 {
+	var message dt.StreamMessage
+	err := pdk.InputJSON(&message)
+	if err != nil {
+		pdk.SetError(err)
+		return 1
+	}
+
+	response, err := h.DataSource.HandleStreamMessage(message)
+	if err != nil {
+		pdk.SetError(err)
+		return 1
+	}
+
+	pdk.OutputJSON(response)
+	return 0
+}
+
+// ExportStreamConnectionEvent implements the stream_connection_event export function
+func (h *PluginHandler) ExportStreamConnectionEvent() int32 {
+	var event dt.ConnectionEvent
+	err := pdk.InputJSON(&event)
+	if err != nil {
+		pdk.SetError(err)
+		return 1
+	}
+
+	response, err := h.DataSource.HandleConnectionEvent(event)
+	if err != nil {
+		pdk.SetError(err)
+		return 1
+	}
+
+	pdk.OutputJSON(response)
 	return 0
 }

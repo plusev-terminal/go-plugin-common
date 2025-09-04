@@ -39,3 +39,39 @@ type StreamConfig struct {
 	Symbol   string `json:"symbol"`   // Trading pair symbol
 	Interval int64  `json:"interval"` // Update interval in seconds
 }
+
+// StreamSetup represents connection setup information from plugin
+type StreamSetup struct {
+	WebSocketURL    string            `json:"websocketUrl"`
+	Headers         map[string]string `json:"headers,omitempty"`
+	Subprotocol     string            `json:"subprotocol,omitempty"`
+	InitialMessages []string          `json:"initialMessages"`
+}
+
+// StreamMessage represents an incoming WebSocket message
+type StreamMessage struct {
+	StreamID     string `json:"streamId"`
+	ConnectionID string `json:"connectionId"`
+	Message      string `json:"message"`
+	MessageType  string `json:"messageType"` // "data", "error", "close"
+}
+
+// StreamResponse represents plugin's response to a stream message
+type StreamResponse struct {
+	Action      string       `json:"action"` // "ignore", "ohlcv", "reconnect", "close", "send"
+	OHLCVRecord *OHLCVRecord `json:"ohlcvRecord,omitempty"`
+	SendMessage string       `json:"sendMessage,omitempty"`
+}
+
+// ConnectionEvent represents a connection lifecycle event
+type ConnectionEvent struct {
+	StreamID     string `json:"streamId"`
+	ConnectionID string `json:"connectionId"`
+	EventType    string `json:"eventType"` // "connected", "disconnected", "error"
+	Error        string `json:"error,omitempty"`
+}
+
+// ConnectionResponse represents plugin's response to a connection event
+type ConnectionResponse struct {
+	Action string `json:"action"` // "ignore", "reconnect", "close"
+}
