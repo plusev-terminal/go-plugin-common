@@ -22,13 +22,13 @@ type DataSource interface {
 	GetOHLCV(params dt.OHLCVParams) ([]dt.OHLCVRecord, error)
 
 	// PrepareStream prepares streaming connection setup
-	PrepareStream(config dt.StreamConfig) (dt.StreamSetup, error)
+	PrepareStream(request dt.StreamSetupRequest) (dt.StreamSetupResponse, error)
 
 	// HandleStreamMessage processes incoming stream messages
-	HandleStreamMessage(message dt.StreamMessage) (dt.StreamResponse, error)
+	HandleStreamMessage(request dt.StreamMessageRequest) (dt.StreamMessageResponse, error)
 
 	// HandleConnectionEvent handles stream connection events
-	HandleConnectionEvent(event dt.ConnectionEvent) (dt.ConnectionResponse, error)
+	HandleConnectionEvent(event dt.StreamConnectionEvent) (dt.StreamConnectionResponse, error)
 
 	// SupportsStreaming returns true if this data source supports real-time streaming
 	SupportsStreaming() bool
@@ -95,44 +95,43 @@ func (h *PluginHandler) ExportStreamOHLCV() int32 {
 
 // ExportPrepareStream implements the prepare_stream export function
 func (h *PluginHandler) ExportPrepareStream() int32 {
-	config, err := GetStreamConfig()
+	var request dt.StreamSetupRequest
+	err := pdk.InputJSON(&request)
 	if err != nil {
 		pdk.SetError(err)
 		return 1
 	}
 
-	setup, err := h.DataSource.PrepareStream(config)
+	response, err := h.DataSource.PrepareStream(request)
 	if err != nil {
 		pdk.SetError(err)
 		return 1
 	}
-
-	pdk.OutputJSON(setup)
+	pdk.OutputJSON(response)
 	return 0
 }
 
 // ExportHandleStreamMessage implements the handle_stream_message export function
 func (h *PluginHandler) ExportHandleStreamMessage() int32 {
-	var message dt.StreamMessage
-	err := pdk.InputJSON(&message)
+	var request dt.StreamMessageRequest
+	err := pdk.InputJSON(&request)
 	if err != nil {
 		pdk.SetError(err)
 		return 1
 	}
 
-	response, err := h.DataSource.HandleStreamMessage(message)
+	response, err := h.DataSource.HandleStreamMessage(request)
 	if err != nil {
 		pdk.SetError(err)
 		return 1
 	}
-
 	pdk.OutputJSON(response)
 	return 0
 }
 
 // ExportStreamConnectionEvent implements the stream_connection_event export function
 func (h *PluginHandler) ExportStreamConnectionEvent() int32 {
-	var event dt.ConnectionEvent
+	var event dt.StreamConnectionEvent
 	err := pdk.InputJSON(&event)
 	if err != nil {
 		pdk.SetError(err)
@@ -144,7 +143,6 @@ func (h *PluginHandler) ExportStreamConnectionEvent() int32 {
 		pdk.SetError(err)
 		return 1
 	}
-
 	pdk.OutputJSON(response)
 	return 0
 }

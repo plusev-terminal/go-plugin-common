@@ -92,13 +92,6 @@ func ExportOHLCV(data []dt.OHLCVRecord, err error) int32 {
 	return 0
 }
 
-// GetStreamConfig reads and parses stream configuration from plugin input
-func GetStreamConfig() (dt.StreamConfig, error) {
-	var config dt.StreamConfig
-	err := pdk.InputJSON(&config)
-	return config, err
-}
-
 // Common timeframes that most exchanges support
 var CommonTimeframes = []dt.Timeframe{
 	{Label: "1m", ApiValue: "1m", Interval: 60},

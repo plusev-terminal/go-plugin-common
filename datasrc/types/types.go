@@ -34,44 +34,52 @@ type OHLCVRecord struct {
 	Volume    float64 `json:"volume"`    // Trading volume
 }
 
-// StreamConfig represents configuration for streaming data
-type StreamConfig struct {
-	Symbol   string `json:"symbol"`   // Trading pair symbol
-	Interval int64  `json:"interval"` // Update interval in seconds
+// StreamSetupRequest represents the request sent to plugin for stream setup
+type StreamSetupRequest struct {
+	StreamID   string                 `json:"streamId"`
+	StreamType string                 `json:"streamType"` // "ohlcv", "orderbook", "orders", "trades", etc.
+	Parameters map[string]interface{} `json:"parameters"` // Generic parameters
 }
 
-// StreamSetup represents connection setup information from plugin
-type StreamSetup struct {
+// StreamSetupResponse represents plugin's response to stream setup request
+type StreamSetupResponse struct {
+	Success         bool              `json:"success"`
 	WebSocketURL    string            `json:"websocketUrl"`
 	Headers         map[string]string `json:"headers,omitempty"`
 	Subprotocol     string            `json:"subprotocol,omitempty"`
 	InitialMessages []string          `json:"initialMessages"`
+	Error           string            `json:"error,omitempty"`
 }
 
-// StreamMessage represents an incoming WebSocket message
-type StreamMessage struct {
+// StreamMessageRequest represents the request sent to plugin for message processing
+type StreamMessageRequest struct {
 	StreamID     string `json:"streamId"`
 	ConnectionID string `json:"connectionId"`
 	Message      string `json:"message"`
 	MessageType  string `json:"messageType"` // "data", "error", "close"
 }
 
-// StreamResponse represents plugin's response to a stream message
-type StreamResponse struct {
-	Action      string       `json:"action"` // "ignore", "ohlcv", "reconnect", "close", "send"
-	OHLCVRecord *OHLCVRecord `json:"ohlcvRecord,omitempty"`
-	SendMessage string       `json:"sendMessage,omitempty"`
+// StreamMessageResponse represents plugin's response to a stream message
+type StreamMessageResponse struct {
+	Success     bool        `json:"success"`
+	Action      string      `json:"action"`             // "ignore", "data", "reconnect", "close", "send"
+	DataType    string      `json:"dataType,omitempty"` // "ohlcv", "orderbook", "order_fill", etc.
+	Data        interface{} `json:"data,omitempty"`     // Generic data payload
+	SendMessage string      `json:"sendMessage,omitempty"`
+	Error       string      `json:"error,omitempty"`
 }
 
-// ConnectionEvent represents a connection lifecycle event
-type ConnectionEvent struct {
+// StreamConnectionEvent represents a connection lifecycle event
+type StreamConnectionEvent struct {
 	StreamID     string `json:"streamId"`
 	ConnectionID string `json:"connectionId"`
 	EventType    string `json:"eventType"` // "connected", "disconnected", "error"
 	Error        string `json:"error,omitempty"`
 }
 
-// ConnectionResponse represents plugin's response to a connection event
-type ConnectionResponse struct {
-	Action string `json:"action"` // "ignore", "reconnect", "close"
+// StreamConnectionResponse represents plugin's response to a connection event
+type StreamConnectionResponse struct {
+	Success bool   `json:"success"`
+	Action  string `json:"action"` // "ignore", "reconnect", "close"
+	Error   string `json:"error,omitempty"`
 }
