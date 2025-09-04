@@ -4,33 +4,25 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/extism/go-pdk"
+	rt "github.com/plusev-terminal/go-plugin-common/requester/types"
 )
 
 //go:wasmimport extism:host/user http_request
 func httpRequest(uint64) uint64
 
-// Request is the request to be sent to the host
-type Request struct {
-	URL     string            `json:"url"`
-	Method  string            `json:"method"`
-	Headers map[string]string `json:"headers"`
-	Body    []byte            `json:"body"`
-}
+// Requester is the default requester that uses the host functions
+type Requester struct{}
 
-// Response is the response from the host
-type Response struct {
-	StatusCode int         `json:"statusCode"`
-	Headers    http.Header `json:"headers"`
-	Body       []byte      `json:"body"`
-	Error      string      `json:"error,omitempty"`
+// NewRequester creates a new default requester
+func NewRequester() *Requester {
+	return &Requester{}
 }
 
 // Send sends the request to the host and returns the response.
 // If v is not nil, the response body will be unmarshaled into it.
-func Send(req *Request, v any) (*Response, error) {
+func (d *Requester) Send(req *rt.Request, v any) (*rt.Response, error) {
 	mem, err := pdk.AllocateJSON(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to allocate memory for request: %w", err)
@@ -40,7 +32,7 @@ func Send(req *Request, v any) (*Response, error) {
 	rmem := pdk.FindMemory(ptr)
 	respData := rmem.ReadBytes()
 
-	var res Response
+	var res rt.Response
 	if err := json.Unmarshal(respData, &res); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}

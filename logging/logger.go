@@ -28,10 +28,17 @@ func NewLogger(pluginID string) *Logger {
 
 // NewLogRecord creates a new log record with the current timestamp
 func (l *Logger) NewLogRecord(eventType string) *PluginLogRecord {
+	now, err := Now()
+	if err != nil {
+		// If we can't get time from host, use a zero time
+		// The host will override this anyway
+		now = time.Time{}
+	}
+
 	return &PluginLogRecord{
 		PluginID:  l.pluginID,
 		EventType: eventType,
-		Timestamp: time.Now().UTC(),
+		Timestamp: now,
 		Data:      make(map[string]any),
 	}
 }
