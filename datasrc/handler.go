@@ -12,6 +12,11 @@ type DataSource interface {
 	// GetName returns the name of the data source
 	GetName() string
 
+	SetCredentials(params map[string]string) error
+
+	// GetCredentialFields returns the credential fields required for authentication
+	GetCredentialFields() ([]dt.CredentialField, error)
+
 	// GetMarkets returns all available trading markets
 	GetMarkets() ([]dt.MarketMeta, error)
 
@@ -56,6 +61,30 @@ func (h *PluginHandler) ExportMeta() int32 {
 // ExportGetName implements the get_name export function
 func (h *PluginHandler) ExportGetName() int32 {
 	return ExportName(h.DataSource.GetName())
+}
+
+func (h *PluginHandler) ExportGetCredentialFields() int32 {
+	fields, err := h.DataSource.GetCredentialFields()
+	if err != nil {
+		pdk.SetError(err)
+		return 1
+	}
+	return ExportCredentialFields(fields)
+}
+
+func (h *PluginHandler) ExportSetCredentials() int32 {
+	params, err := GetCredentials()
+	if err != nil {
+		pdk.SetError(err)
+		return 1
+	}
+
+	err = h.DataSource.SetCredentials(params)
+	if err != nil {
+		pdk.SetError(err)
+		return 1
+	}
+	return 0
 }
 
 // ExportListMarkets implements the list_markets export function

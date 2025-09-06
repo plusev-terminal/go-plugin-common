@@ -62,6 +62,12 @@ func ExportName(name string) int32 {
 	return 0
 }
 
+// ExportCredentialFields exports the get_credential_fields function with the given fields
+func ExportCredentialFields(fields []dt.CredentialField) int32 {
+	pdk.OutputJSON(fields)
+	return 0
+}
+
 // ExportMarkets exports the list_markets function with the given markets
 func ExportMarkets(markets []dt.MarketMeta) int32 {
 	pdk.OutputJSON(markets)
@@ -72,6 +78,12 @@ func ExportMarkets(markets []dt.MarketMeta) int32 {
 func ExportTimeframes(timeframes []dt.Timeframe) int32 {
 	pdk.OutputJSON(timeframes)
 	return 0
+}
+
+func GetCredentials() (map[string]string, error) {
+	var creds map[string]string
+	err := pdk.InputJSON(&creds)
+	return creds, err
 }
 
 // GetOHLCVParams reads and parses OHLCV parameters from plugin input

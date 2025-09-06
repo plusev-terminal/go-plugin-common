@@ -1,5 +1,13 @@
 package datasrc
 
+// CredentialField represents a single credential field required for authentication when interacting with the 3rd party api.
+type CredentialField struct {
+	Name      string `json:"name"`
+	Encrypt   bool   `json:"encrypt"`
+	Mask      bool   `json:"mask"`
+	OmitEmpty bool   `json:"omitEmpty"`
+}
+
 // MarketMeta represents metadata about a trading market/pair
 type MarketMeta struct {
 	Name      string `json:"name"`      // Trading pair name (e.g., "BTCUSDT")
@@ -17,11 +25,12 @@ type Timeframe struct {
 
 // OHLCVParams represents parameters for OHLCV data requests
 type OHLCVParams struct {
-	Symbol    string `json:"symbol"`    // Trading pair symbol
-	Timeframe string `json:"timeframe"` // Timeframe for the data
-	StartTime int64  `json:"startTime"` // Start timestamp (Unix)
-	EndTime   int64  `json:"endTime"`   // End timestamp (Unix)
-	Limit     int    `json:"limit"`     // Maximum number of records
+	Credentials map[string]string `json:"credentials"`
+	Symbol      string            `json:"symbol"`    // Trading pair symbol
+	Timeframe   string            `json:"timeframe"` // Timeframe for the data
+	StartTime   int64             `json:"startTime"` // Start timestamp (Unix)
+	EndTime     int64             `json:"endTime"`   // End timestamp (Unix)
+	Limit       int               `json:"limit"`     // Maximum number of records
 }
 
 // OHLCVRecord represents a single OHLCV (candlestick) data point
