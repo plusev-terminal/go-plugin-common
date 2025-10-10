@@ -96,6 +96,15 @@ func (r *CommandRouter) Register(commandName string, handler CommandHandler) {
 	r.handlers[commandName] = handler
 }
 
+// GetRegisteredCommands returns a list of all registered command names
+func (r *CommandRouter) GetRegisteredCommands() []string {
+	commands := make([]string, 0, len(r.handlers))
+	for name := range r.handlers {
+		commands = append(commands, name)
+	}
+	return commands
+}
+
 // Handle routes a command to the appropriate handler
 func (r *CommandRouter) Handle(cmd dt.Command) dt.Response {
 	handler, ok := r.handlers[cmd.Name]
