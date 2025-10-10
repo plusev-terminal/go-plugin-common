@@ -12,6 +12,7 @@ type Meta struct {
 	Tags        []string        `json:"tags"`
 	Contacts    []AuthorContact `json:"contacts"`
 	Resources   ResourceAccess  `json:"resources"`
+	Features    []string        `json:"features"` // List of supported features
 }
 
 type AuthorContact struct {
