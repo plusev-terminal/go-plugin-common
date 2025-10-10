@@ -38,12 +38,17 @@ var (
 )
 
 // RegisterPlugin registers a DataSourcePlugin and generates all WASM exports
-// This should be called in main() with your plugin implementation
+// This MUST be called in init() (not main()) so the plugin is registered before
+// any WASM exports are invoked by the host
 //
 // Example:
 //
-//	func main() {
+//	func init() {
 //	    datasrc.RegisterPlugin(&MyExchangePlugin{})
+//	}
+//
+//	func main() {
+//	    // Required for WASM, but can be empty
 //	}
 func RegisterPlugin(plugin DataSourcePlugin) {
 	registeredPlugin = plugin
@@ -60,11 +65,6 @@ func RegisterPlugin(plugin DataSourcePlugin) {
 
 //go:wasmexport meta
 func meta() int32 {
-	if registeredPlugin == nil {
-		pdk.SetError(nil)
-		return 1
-	}
-
 	pluginMeta := registeredPlugin.GetMeta()
 
 	// Auto-populate Features with registered commands
@@ -91,22 +91,12 @@ func meta() int32 {
 
 //go:wasmexport get_configuration_fields
 func get_configuration_fields() int32 {
-	if registeredPlugin == nil {
-		pdk.SetError(nil)
-		return 1
-	}
-
 	fields := registeredPlugin.GetConfigFields()
 	return ExportConfigFields(fields)
 }
 
 //go:wasmexport init
 func initialize() int32 {
-	if registeredPlugin == nil {
-		pdk.SetError(nil)
-		return 1
-	}
-
 	// Load configuration from backend
 	err := pluginConfig.Load()
 	if err != nil {
@@ -124,19 +114,11 @@ func initialize() int32 {
 
 //go:wasmexport handle_command
 func handle_command() int32 {
-	if pluginRouter == nil {
-		return WriteResponse(ErrorResponseMsg("plugin not registered"))
-	}
-
 	return pluginRouter.HandleJSON()
 }
 
 //go:wasmexport shutdown
 func shutdown() int32 {
-	if registeredPlugin == nil {
-		return 0
-	}
-
 	err := registeredPlugin.OnShutdown()
 	if err != nil {
 		return 1
