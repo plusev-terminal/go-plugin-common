@@ -33,7 +33,7 @@ func ReadCommand() (dt.Command, error) {
 // WriteResponse writes a response to plugin output
 func WriteResponse(resp dt.Response) int32 {
 	pdk.OutputJSON(resp)
-	if resp.Success {
+	if resp.Result {
 		return 0
 	}
 	return 1
@@ -42,24 +42,24 @@ func WriteResponse(resp dt.Response) int32 {
 // SuccessResponse creates a successful response with data
 func SuccessResponse(data any) dt.Response {
 	return dt.Response{
-		Success: true,
-		Data:    data,
+		Result: true,
+		Data:   data,
 	}
 }
 
 // ErrorResponse creates an error response
 func ErrorResponse(err error) dt.Response {
 	return dt.Response{
-		Success: false,
-		Error:   err.Error(),
+		Result: false,
+		Error:  err.Error(),
 	}
 }
 
 // ErrorResponseMsg creates an error response with a message
 func ErrorResponseMsg(msg string) dt.Response {
 	return dt.Response{
-		Success: false,
-		Error:   msg,
+		Result: false,
+		Error:  msg,
 	}
 }
 

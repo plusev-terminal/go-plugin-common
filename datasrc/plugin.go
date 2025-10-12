@@ -25,6 +25,11 @@ type DataSourcePlugin interface {
 	// Clean up any resources (close connections, stop goroutines, etc.)
 	OnShutdown() error
 
+	// GetRateLimits returns the rate limit configurations for this plugin's commands
+	// Rate limiting is enforced by the wrapper before command execution
+	// Return nil or empty slice to use default rate limits
+	GetRateLimits() []dt.RateLimit
+
 	// RegisterCommands registers command handlers with the router
 	// Example: router.Register("getMarkets", p.handleGetMarkets)
 	RegisterCommands(router *CommandRouter)
@@ -93,6 +98,13 @@ func meta() int32 {
 func get_configuration_fields() int32 {
 	fields := registeredPlugin.GetConfigFields()
 	return ExportConfigFields(fields)
+}
+
+//go:wasmexport get_rate_limits
+func get_rate_limits() int32 {
+	limits := registeredPlugin.GetRateLimits()
+	pdk.OutputJSON(limits)
+	return 0
 }
 
 //go:wasmexport init
