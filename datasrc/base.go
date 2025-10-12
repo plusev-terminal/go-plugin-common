@@ -111,6 +111,7 @@ func (r *CommandRouter) Handle(cmd dt.Command) dt.Response {
 	if !ok {
 		return ErrorResponseMsg(fmt.Sprintf("unknown command: %s", cmd.Name))
 	}
+	// Params are already validated by the wrapper/datasource before reaching here
 	return handler(cmd.Params)
 }
 
