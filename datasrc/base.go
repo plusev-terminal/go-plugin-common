@@ -65,13 +65,13 @@ func ErrorResponseMsg(msg string) dt.Response {
 
 // Common timeframes that most exchanges support
 var CommonTimeframes = []dt.Timeframe{
-	{Label: "1 minute", Value: "1m", Interval: 60},
-	{Label: "5 minutes", Value: "5m", Interval: 300},
-	{Label: "15 minutes", Value: "15m", Interval: 900},
-	{Label: "30 minutes", Value: "30m", Interval: 1800},
-	{Label: "1 hour", Value: "1h", Interval: 3600},
-	{Label: "4 hours", Value: "4h", Interval: 14400},
-	{Label: "1 day", Value: "1d", Interval: 86400},
+	{Value: 1, Unit: dt.Minutes},
+	{Value: 5, Unit: dt.Minutes},
+	{Value: 15, Unit: dt.Minutes},
+	{Value: 30, Unit: dt.Minutes},
+	{Value: 1, Unit: dt.Hours},
+	{Value: 4, Unit: dt.Hours},
+	{Value: 1, Unit: dt.Days},
 }
 
 // ================== Command Router Helper ==================

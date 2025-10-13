@@ -1,4 +1,3 @@
-package cex
 package cex_test
 
 import (
@@ -22,8 +21,8 @@ func TestParseOHLCVStreamParams(t *testing.T) {
 				"interval": "1m",
 			},
 			want: &cex.OHLCVStreamParams{
-				Symbol:   "BTC/USDT",
-				Interval: "1m",
+				Symbol:    "BTC/USDT",
+				Timeframe: "1m",
 			},
 			wantErr: false,
 		},
@@ -59,7 +58,7 @@ func TestParseOHLCVStreamParams(t *testing.T) {
 				return
 			}
 			if !tt.wantErr {
-				if got.Symbol != tt.want.Symbol || got.Interval != tt.want.Interval {
+				if got.Symbol != tt.want.Symbol || got.Interval != tt.want.Timeframe {
 					t.Errorf("ParseOHLCVStreamParams() = %+v, want %+v", got, tt.want)
 				}
 			}
@@ -162,8 +161,8 @@ func TestParseGetOHLCVParams(t *testing.T) {
 
 func TestOHLCVStreamParamsToMap(t *testing.T) {
 	params := &cex.OHLCVStreamParams{
-		Symbol:   "BTC/USDT",
-		Interval: "1m",
+		Symbol:    "BTC/USDT",
+		Timeframe: "1m",
 	}
 
 	result := params.ToMap()

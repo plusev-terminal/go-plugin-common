@@ -42,13 +42,6 @@ type Market struct {
 	AssetType string `json:"assetType"` // e.g., "spot", "futures", "perpetual"
 }
 
-// Timeframe represents a supported timeframe/interval
-type Timeframe struct {
-	Label    string `json:"label"`    // Display label (e.g., "1 minute", "1 hour")
-	Value    string `json:"value"`    // API value (e.g., "1m", "1h")
-	Interval int64  `json:"interval"` // Interval in seconds
-}
-
 // OHLCVParams represents parameters for OHLCV data requests
 type OHLCVParams struct {
 	Symbol    string `json:"symbol"`    // Trading pair symbol
@@ -73,9 +66,9 @@ type OHLCVRecord struct {
 
 // StreamSetupRequest represents the request sent to plugin for stream setup
 type StreamSetupRequest struct {
-	StreamID   string                 `json:"streamId"`
-	StreamType string                 `json:"streamType"` // "ohlcv", "orderbook", "orders", "trades", etc.
-	Parameters map[string]interface{} `json:"parameters"` // Generic parameters
+	StreamID   string         `json:"streamId"`
+	StreamType string         `json:"streamType"` // "ohlcv", "orderbook", "orders", "trades", etc.
+	Parameters map[string]any `json:"parameters"` // Generic parameters
 }
 
 // StreamSetupResponse represents plugin's response to stream setup request
@@ -98,12 +91,12 @@ type StreamMessageRequest struct {
 
 // StreamMessageResponse represents plugin's response to a stream message
 type StreamMessageResponse struct {
-	Success     bool        `json:"success"`
-	Action      string      `json:"action"`             // "ignore", "data", "reconnect", "close", "send"
-	DataType    string      `json:"dataType,omitempty"` // "ohlcv", "orderbook", "order_fill", etc.
-	Data        interface{} `json:"data,omitempty"`     // Generic data payload
-	SendMessage string      `json:"sendMessage,omitempty"`
-	Error       string      `json:"error,omitempty"`
+	Success     bool   `json:"success"`
+	Action      string `json:"action"`             // "ignore", "data", "reconnect", "close", "send"
+	DataType    string `json:"dataType,omitempty"` // "ohlcv", "orderbook", "order_fill", etc.
+	Data        any    `json:"data,omitempty"`     // Generic data payload
+	SendMessage string `json:"sendMessage,omitempty"`
+	Error       string `json:"error,omitempty"`
 }
 
 // StreamConnectionEvent represents a connection lifecycle event
