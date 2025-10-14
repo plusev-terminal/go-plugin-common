@@ -10,9 +10,10 @@ type Command struct {
 
 // Response represents the result of a command execution
 type Response struct {
-	Result bool   `json:"result"`
-	Data   any    `json:"data,omitempty"`  // Could be direct data or a channel for streams
-	Error  string `json:"error,omitempty"` // Error message if Success is false
+	Result          bool   `json:"result"`
+	Data            any    `json:"data,omitempty"`            // Could be direct data or a channel for streams
+	Error           string `json:"error,omitempty"`           // Error message if Success is false
+	CacheForSeconds *int64 `json:"cacheForSeconds,omitempty"` // Optional: cache duration in seconds (wrapper converts to time.Duration)
 }
 
 // StreamData represents a single piece of data from a stream

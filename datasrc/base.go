@@ -3,6 +3,7 @@ package datasrc
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/extism/go-pdk"
 	dt "github.com/plusev-terminal/go-plugin-common/datasrc/types"
@@ -40,7 +41,16 @@ func WriteResponse(resp dt.Response) int32 {
 }
 
 // SuccessResponse creates a successful response with data
-func SuccessResponse(data any) dt.Response {
+func SuccessResponse(data any, cacheFor ...time.Duration) dt.Response {
+	if len(cacheFor) > 0 {
+		seconds := int64(cacheFor[0].Seconds())
+		return dt.Response{
+			Result:          true,
+			Data:            data,
+			CacheForSeconds: &seconds,
+		}
+	}
+
 	return dt.Response{
 		Result: true,
 		Data:   data,
