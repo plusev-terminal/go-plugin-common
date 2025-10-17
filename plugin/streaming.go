@@ -1,8 +1,7 @@
-package datasrc
+package plugin
 
 import (
 	"github.com/extism/go-pdk"
-	dt "github.com/plusev-terminal/go-plugin-common/datasrc/types"
 )
 
 // StreamHandler is the interface that plugin developers implement to handle WebSocket streaming
@@ -10,11 +9,11 @@ import (
 type StreamHandler interface {
 	// HandleStreamMessage processes incoming WebSocket messages
 	// Return action="data" to push data to consumers, or action="ignore" to skip
-	HandleStreamMessage(request dt.StreamMessageRequest) (dt.StreamMessageResponse, error)
+	HandleStreamMessage(request StreamMessageRequest) (StreamMessageResponse, error)
 
 	// HandleConnectionEvent handles WebSocket connection lifecycle events
 	// Return action="reconnect" to request reconnection, or action="ignore" to do nothing
-	HandleConnectionEvent(event dt.StreamConnectionEvent) (dt.StreamConnectionResponse, error)
+	HandleConnectionEvent(event StreamConnectionEvent) (StreamConnectionResponse, error)
 }
 
 // Global stream handler registered by RegisterStreamHandler
@@ -49,7 +48,7 @@ func RegisterStreamHandler(handler StreamHandler) {
 func handle_stream_message() int32 {
 	// Check if stream handler is registered
 	if registeredStreamHandler == nil {
-		pdk.OutputJSON(dt.StreamMessageResponse{
+		pdk.OutputJSON(StreamMessageResponse{
 			Success: false,
 			Action:  "ignore",
 			Error:   "stream handler not registered",
@@ -58,9 +57,9 @@ func handle_stream_message() int32 {
 	}
 
 	// Read the incoming request
-	var req dt.StreamMessageRequest
+	var req StreamMessageRequest
 	if err := pdk.InputJSON(&req); err != nil {
-		pdk.OutputJSON(dt.StreamMessageResponse{
+		pdk.OutputJSON(StreamMessageResponse{
 			Success: false,
 			Action:  "ignore",
 			Error:   "failed to parse stream message request",
@@ -71,7 +70,7 @@ func handle_stream_message() int32 {
 	// Call the registered handler
 	resp, err := registeredStreamHandler.HandleStreamMessage(req)
 	if err != nil {
-		pdk.OutputJSON(dt.StreamMessageResponse{
+		pdk.OutputJSON(StreamMessageResponse{
 			Success: false,
 			Action:  "ignore",
 			Error:   err.Error(),
@@ -88,7 +87,7 @@ func handle_stream_message() int32 {
 func handle_connection_event() int32 {
 	// Check if stream handler is registered
 	if registeredStreamHandler == nil {
-		pdk.OutputJSON(dt.StreamConnectionResponse{
+		pdk.OutputJSON(StreamConnectionResponse{
 			Success: false,
 			Action:  "ignore",
 			Error:   "stream handler not registered",
@@ -97,9 +96,9 @@ func handle_connection_event() int32 {
 	}
 
 	// Read the incoming event
-	var event dt.StreamConnectionEvent
+	var event StreamConnectionEvent
 	if err := pdk.InputJSON(&event); err != nil {
-		pdk.OutputJSON(dt.StreamConnectionResponse{
+		pdk.OutputJSON(StreamConnectionResponse{
 			Success: false,
 			Action:  "ignore",
 			Error:   "failed to parse connection event",
@@ -110,7 +109,7 @@ func handle_connection_event() int32 {
 	// Call the registered handler
 	resp, err := registeredStreamHandler.HandleConnectionEvent(event)
 	if err != nil {
-		pdk.OutputJSON(dt.StreamConnectionResponse{
+		pdk.OutputJSON(StreamConnectionResponse{
 			Success: false,
 			Action:  "ignore",
 			Error:   err.Error(),
@@ -132,27 +131,27 @@ func handle_connection_event() int32 {
 //
 // Example:
 //
-//	func (c *Client) HandleConnectionEvent(event dt.StreamConnectionEvent) (dt.StreamConnectionResponse, error) {
+//	func (c *Client) HandleConnectionEvent(event StreamConnectionEvent) (StreamConnectionResponse, error) {
 //	    c.log.InfoWithData("Connection event", map[string]any{"type": event.EventType})
 //	    return datasrc.DefaultConnectionEventHandler(event), nil
 //	}
-func DefaultConnectionEventHandler(event dt.StreamConnectionEvent) dt.StreamConnectionResponse {
+func DefaultConnectionEventHandler(event StreamConnectionEvent) StreamConnectionResponse {
 	switch event.EventType {
 	case "connected", "connecting":
 		// Connection established or in progress - no action needed
-		return dt.StreamConnectionResponse{
+		return StreamConnectionResponse{
 			Success: true,
 			Action:  "ignore",
 		}
 	case "disconnected", "error":
 		// Connection lost or error - request reconnection
-		return dt.StreamConnectionResponse{
+		return StreamConnectionResponse{
 			Success: true,
 			Action:  "reconnect",
 		}
 	default:
 		// Unknown event type - ignore
-		return dt.StreamConnectionResponse{
+		return StreamConnectionResponse{
 			Success: true,
 			Action:  "ignore",
 		}
@@ -160,8 +159,8 @@ func DefaultConnectionEventHandler(event dt.StreamConnectionEvent) dt.StreamConn
 }
 
 // StreamResponse is a helper to create successful data responses
-func StreamResponse(dataType string, data interface{}) dt.StreamMessageResponse {
-	return dt.StreamMessageResponse{
+func StreamResponse(dataType string, data interface{}) StreamMessageResponse {
+	return StreamMessageResponse{
 		Success:  true,
 		Action:   "data",
 		DataType: dataType,
@@ -170,16 +169,16 @@ func StreamResponse(dataType string, data interface{}) dt.StreamMessageResponse 
 }
 
 // IgnoreResponse is a helper to create ignore responses (for messages that don't need processing)
-func IgnoreResponse() dt.StreamMessageResponse {
-	return dt.StreamMessageResponse{
+func IgnoreResponse() StreamMessageResponse {
+	return StreamMessageResponse{
 		Success: true,
 		Action:  "ignore",
 	}
 }
 
 // SendResponse is a helper to create send responses (to send a message back to the WebSocket)
-func SendResponse(message string) dt.StreamMessageResponse {
-	return dt.StreamMessageResponse{
+func SendResponse(message string) StreamMessageResponse {
+	return StreamMessageResponse{
 		Success:     true,
 		Action:      "send",
 		SendMessage: message,
@@ -187,8 +186,8 @@ func SendResponse(message string) dt.StreamMessageResponse {
 }
 
 // ReconnectResponse is a helper to request reconnection
-func ReconnectResponse(reason string) dt.StreamMessageResponse {
-	return dt.StreamMessageResponse{
+func ReconnectResponse(reason string) StreamMessageResponse {
+	return StreamMessageResponse{
 		Success: true,
 		Action:  "reconnect",
 		Error:   reason,

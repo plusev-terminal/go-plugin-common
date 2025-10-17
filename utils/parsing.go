@@ -2,14 +2,43 @@ package utils
 
 import "time"
 
-// ExtractString safely extracts a string value from the map
-func ExtractString(data map[string]any, key string) string {
-	if val, ok := data[key]; ok {
-		if str, ok := val.(string); ok {
-			return str
+type mapValue interface {
+	float64 | string | bool
+}
+
+func IfThen[T any](condition bool, trueValue T, falseValue T) T {
+	if condition {
+		return trueValue
+	}
+	return falseValue
+}
+
+func GetValue[T mapValue](key string, data map[string]any, defaultValue ...T) T {
+	value, ok := data[key].(T)
+	if !ok {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		var defaultValue T
+		return defaultValue
+	}
+
+	var zero T
+
+	if len(defaultValue) > 0 && value == zero {
+		return defaultValue[0]
+	}
+
+	return value
+}
+
+func AnyMatches[T comparable](predicate func(T) bool, values ...T) bool {
+	for _, v := range values {
+		if predicate(v) {
+			return true
 		}
 	}
-	return ""
+	return false
 }
 
 // ExtractInt safely extracts an int value from the map

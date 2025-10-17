@@ -1,20 +1,19 @@
-package datasrc
+package plugin
 
 import (
 	"github.com/extism/go-pdk"
-	dt "github.com/plusev-terminal/go-plugin-common/datasrc/types"
 	m "github.com/plusev-terminal/go-plugin-common/meta"
 )
 
-// DataSourcePlugin is the interface that plugin developers implement
+// Plugin is the interface that plugin developers implement
 // The library handles all WASM exports and lifecycle management automatically
-type DataSourcePlugin interface {
+type Plugin interface {
 	// GetMeta returns the plugin metadata (PluginID, Name, AppID, Resources, etc.)
 	GetMeta() m.Meta
 
 	// GetConfigFields returns the configuration fields needed by this plugin
 	// Used to generate UI forms for creating/editing connections
-	GetConfigFields() []dt.ConfigField
+	GetConfigFields() []ConfigField
 
 	// OnInit is called when the plugin is initialized with user configuration
 	// The ConfigStore contains all configuration values from the user
@@ -22,13 +21,13 @@ type DataSourcePlugin interface {
 	OnInit(config *ConfigStore) error
 
 	// OnShutdown is called when the plugin is being shut down
-	// Clean up any resources (close connections, stop goroutines, etc.)
+	// Clean up any resources
 	OnShutdown() error
 
 	// GetRateLimits returns the rate limit configurations for this plugin's commands
 	// Rate limiting is enforced by the wrapper before command execution
 	// Return nil or empty slice to use default rate limits
-	GetRateLimits() []dt.RateLimit
+	GetRateLimits() []RateLimit
 
 	// RegisterCommands registers command handlers with the router
 	// Example: router.Register("getMarkets", p.handleGetMarkets)
@@ -37,12 +36,12 @@ type DataSourcePlugin interface {
 
 // Global state managed by RegisterPlugin
 var (
-	registeredPlugin DataSourcePlugin
+	registeredPlugin Plugin
 	pluginConfig     *ConfigStore
 	pluginRouter     *CommandRouter
 )
 
-// RegisterPlugin registers a DataSourcePlugin and generates all WASM exports
+// RegisterPlugin registers a Plugin and generates all WASM exports
 // This MUST be called in init() (not main()) so the plugin is registered before
 // any WASM exports are invoked by the host
 //
@@ -55,7 +54,7 @@ var (
 //	func main() {
 //	    // Required for WASM, but can be empty
 //	}
-func RegisterPlugin(plugin DataSourcePlugin) {
+func RegisterPlugin(plugin Plugin) {
 	registeredPlugin = plugin
 	pluginConfig = NewConfigStore()
 	pluginRouter = NewCommandRouter()
@@ -96,8 +95,7 @@ func meta() int32 {
 
 //go:wasmexport get_configuration_fields
 func get_configuration_fields() int32 {
-	fields := registeredPlugin.GetConfigFields()
-	return ExportConfigFields(fields)
+	return ExportConfigFields(registeredPlugin.GetConfigFields())
 }
 
 //go:wasmexport get_rate_limits

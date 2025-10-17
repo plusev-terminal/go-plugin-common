@@ -66,9 +66,9 @@ func (m *MockRequester) Send(req *rt.Request, response interface{}) (*rt.Respons
 			}
 
 			return &rt.Response{
-				StatusCode: 200,
-				Headers:    http.Header{"Content-Type": []string{"application/json"}},
-				Body:       []byte(jsonResp),
+				Status:  200,
+				Headers: http.Header{"Content-Type": []string{"application/json"}},
+				Body:    []byte(jsonResp),
 			}, nil
 		}
 	}
@@ -115,9 +115,9 @@ func (m *MockRequester) makeRealRequest(req *rt.Request, response interface{}) (
 	}
 
 	return &rt.Response{
-		StatusCode: resp.StatusCode,
-		Headers:    resp.Header,
-		Body:       respBody,
+		Status:  resp.StatusCode,
+		Headers: resp.Header,
+		Body:    respBody,
 	}, nil
 }
 

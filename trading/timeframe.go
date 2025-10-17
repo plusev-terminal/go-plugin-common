@@ -1,4 +1,4 @@
-package datasrc
+package trading
 
 import "fmt"
 

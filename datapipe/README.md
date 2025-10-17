@@ -15,38 +15,30 @@ import (
 	"github.com/plusev-terminal/go-plugin-common/datapipe"
 	dt "github.com/plusev-terminal/go-plugin-common/datapipe/types"
 	m "github.com/plusev-terminal/go-plugin-common/meta"
+	"github.com/plusev-terminal/go-plugin-common/plugin"
 )
 
 type MyStrategyPlugin struct {
-	config *datapipe.ConfigStore
-	// Your plugin state here
+	config *plugin.ConfigStore
 }
 
-func (p *MyStrategyPlugin) GetMeta() datapipe.DataPipeMeta {
-	return datapipe.DataPipeMeta{
-		Meta: m.Meta{
-			PluginID:    "my-strategy",
-			Name:        "My Trading Strategy",
-			AppID:       "datapipes",
-			Category:    "Strategies",
-			Description: "My awesome trading strategy",
-			Author:      "Your Name",
-			Version:     "1.0.0",
-			Resources: m.ResourceAccess{
-				// Define resource requirements
-			},
-		},
-		Inputs: []dt.NodePort{
-			{Name: "ohlcv", DataTypes: []dt.DataType{dt.DataTypeOHLCVRecord}},
-		},
-		Outputs: []dt.NodePort{
-			{Name: "signal", DataTypes: []dt.DataType{dt.DataTypeSignal}},
+func (p *MyStrategyPlugin) GetMeta() m.Meta {
+	return m.Meta{
+		PluginID:    "my-strategy",
+		Name:        "My Trading Strategy",
+		AppID:       "datapipes",
+		Category:    "Strategies",
+		Description: "My awesome trading strategy",
+		Author:      "Your Name",
+		Version:     "1.0.0",
+		Resources: m.ResourceAccess{
+			// Define resource requirements
 		},
 	}
 }
 
-func (p *MyStrategyPlugin) GetConfigFields() []dt.ConfigField {
-	return []dt.ConfigField{
+func (p *MyStrategyPlugin) GetConfigFields() []plugin.ConfigField {
+	return []plugin.ConfigField{
 		{
 			Label:       "Fast MA Period",
 			Name:        "fast_period",
@@ -58,8 +50,44 @@ func (p *MyStrategyPlugin) GetConfigFields() []dt.ConfigField {
 	}
 }
 
-func (p *MyStrategyPlugin) GetGuiDefinition() *dt.GuiDefinition {
-	return &dt.GuiDefinition{
+func (p *MyStrategyPlugin) OnInit(config *plugin.ConfigStore) error {
+	p.config = config
+	// Initialize and validate configuration
+	return nil
+}
+
+func (p *MyStrategyPlugin) OnShutdown() error {
+	// Cleanup resources
+	return nil
+}
+
+func (p *MyStrategyPlugin) GetRateLimits() []plugin.RateLimit {
+	// Define rate limits if needed
+	return nil
+}
+
+func (p *MyStrategyPlugin) RegisterCommands(router *plugin.CommandRouter) {
+	router.Register(datapipe.CMD_PROCESS, p.handleProcess)
+	router.Register(datapipe.CMD_GET_CONNECTIONS, p.handleGetConnections)
+	router.Register(datapipe.CMD_GET_NODE_META, p.handleGetNodeMeta)
+}
+
+// Command Handlers
+
+func (p *MyStrategyPlugin) handleGetConnections(_ map[string]any) plugin.Response {
+	return plugin.SuccessResponse(dt.Connections{
+		Inputs: []dt.NodePort{
+			{Name: "ohlcv", DataTypes: []dt.DataType{dt.DataTypeOHLCVRecord}},
+		},
+		Outputs: []dt.NodePort{
+			{Name: "signal", DataTypes: []dt.DataType{dt.DataTypeSignal}},
+		},
+	})
+}
+
+func (p *MyStrategyPlugin) handleGetGuiDefinition(_ map[string]any) plugin.Response {
+	// Optional: Return custom UI controls, or return nil data for default rendering
+	return plugin.SuccessResponse(dt.GuiDefinition{
 		Controls: []dt.GuiControl{
 			{
 				Label: "Fast MA Period",
@@ -71,32 +99,30 @@ func (p *MyStrategyPlugin) GetGuiDefinition() *dt.GuiDefinition {
 				},
 			},
 		},
-	}
+	})
 }
 
-func (p *MyStrategyPlugin) OnInit(config *datapipe.ConfigStore) error {
-	p.config = config
-	// Initialize your plugin
-	return nil
-}
-
-func (p *MyStrategyPlugin) OnShutdown() error {
-	// Cleanup resources
-	return nil
-}
-
-func (p *MyStrategyPlugin) Process(req dt.ProcessRequest) dt.ProcessResponse {
+func (p *MyStrategyPlugin) handleProcess(params map[string]any) plugin.Response {
 	// Get configuration
 	fastPeriod := p.config.GetNumber("fast_period")
 	
-	// Get input data
-	ohlcvData := req.Input["ohlcv"]
+	// Get input data from params (keyed by port name)
+	inputs, ok := params["inputs"].(map[string]any)
+	if !ok {
+		return plugin.ErrorResponseMsg("missing inputs parameter")
+	}
+
+	// Get input data from the "ohlcv" port
+	ohlcvRawData, ok := inputs["ohlcv"]
+	if !ok {
+		return plugin.ErrorResponseMsg("missing ohlcv input data")
+	}
 	
 	// Process data
 	// ... your logic here ...
 	
-	// Return output
-	return datapipe.SuccessResponse(map[string]any{
+	// Return output (keyed by output port name)
+	return plugin.SuccessResponse(map[string]any{
 		"signal": map[string]any{
 			"type":     "buy",
 			"strength": 0.8,
@@ -106,7 +132,7 @@ func (p *MyStrategyPlugin) Process(req dt.ProcessRequest) dt.ProcessResponse {
 
 func init() {
 	// Register plugin - MUST be in init(), not main()
-	datapipe.RegisterPlugin(&MyStrategyPlugin{})
+	plugin.RegisterPlugin(&MyStrategyPlugin{})
 }
 
 func main() {
@@ -136,9 +162,12 @@ Returns plugin metadata including:
 
 Returns configuration fields for the plugin. These define what configuration the plugin needs.
 
-### `GetGuiDefinition() *GuiDefinition`
+### `RegisterCommands(router *CommandRouter)`
 
-Returns UI controls for the configuration panel. Return `nil` to use default rendering from ConfigFields.
+Registers command handlers for the plugin. Standard commands include:
+- `CMD_PROCESS`: Main processing function for data flow
+- `CMD_GET_CONNECTIONS`: Returns input/output port definitions
+- `CMD_GET_NODE_META`: Returns custom UI controls, inputs and outputs
 
 ### `OnInit(config *ConfigStore) error`
 

@@ -3,7 +3,7 @@ package cex
 import (
 	"time"
 
-	"github.com/plusev-terminal/go-plugin-common/datasrc/utils"
+	"github.com/plusev-terminal/go-plugin-common/utils"
 )
 
 // OHLCVStreamParams contains parameters for the ohlcvStream command
@@ -24,16 +24,16 @@ type GetOHLCVParams struct {
 // OHLCVStreamParamsFromMap extracts OHLCVStreamParams from validated map
 func OHLCVStreamParamsFromMap(data map[string]any) OHLCVStreamParams {
 	return OHLCVStreamParams{
-		Symbol:    utils.ExtractString(data, "symbol"),
-		Timeframe: utils.ExtractString(data, "timeframe"),
+		Symbol:    utils.GetValue[string]("symbol", data),
+		Timeframe: utils.GetValue[string]("timeframe", data),
 	}
 }
 
 // GetOHLCVParamsFromMap extracts GetOHLCVParams from validated map
 func GetOHLCVParamsFromMap(data map[string]any) GetOHLCVParams {
 	return GetOHLCVParams{
-		Symbol:    utils.ExtractString(data, "symbol"),
-		Timeframe: utils.ExtractString(data, "timeframe"),
+		Symbol:    utils.GetValue[string]("symbol", data),
+		Timeframe: utils.GetValue[string]("timeframe", data),
 		StartTime: utils.ExtractTime(data, "startTime"),
 		EndTime:   utils.ExtractTime(data, "endTime"),
 		Limit:     utils.ExtractInt(data, "limit"),

@@ -1,58 +1,10 @@
-package datapipe
+package plugin
 
 import (
 	"encoding/json"
 
 	"github.com/extism/go-pdk"
-	dt "github.com/plusev-terminal/go-plugin-common/datapipe/types"
 )
-
-// ReadProcessRequest reads a process request from plugin input
-func ReadProcessRequest() (dt.ProcessRequest, error) {
-	var req dt.ProcessRequest
-	err := pdk.InputJSON(&req)
-	return req, err
-}
-
-// WriteProcessResponse writes a process response to plugin output
-func WriteProcessResponse(resp dt.ProcessResponse) int32 {
-	pdk.OutputJSON(resp)
-	if resp.Success {
-		return 0
-	}
-	return 1
-}
-
-// ReadConfig reads configuration from plugin input (used in init export)
-func ReadConfig() (map[string]any, error) {
-	var config map[string]any
-	err := pdk.InputJSON(&config)
-	return config, err
-}
-
-// SuccessResponse creates a successful process response
-func SuccessResponse(output map[string]any) dt.ProcessResponse {
-	return dt.ProcessResponse{
-		Success: true,
-		Output:  output,
-	}
-}
-
-// ErrorResponse creates an error process response
-func ErrorResponse(err error) dt.ProcessResponse {
-	return dt.ProcessResponse{
-		Success: false,
-		Error:   err.Error(),
-	}
-}
-
-// ErrorResponseMsg creates an error process response with a message
-func ErrorResponseMsg(msg string) dt.ProcessResponse {
-	return dt.ProcessResponse{
-		Success: false,
-		Error:   msg,
-	}
-}
 
 // ConfigStore helps manage plugin configuration
 type ConfigStore struct {
@@ -68,7 +20,8 @@ func NewConfigStore() *ConfigStore {
 
 // Load loads configuration from JSON input
 func (cs *ConfigStore) Load() error {
-	config, err := ReadConfig()
+	var config map[string]any
+	err := pdk.InputJSON(&config)
 	if err != nil {
 		return err
 	}
