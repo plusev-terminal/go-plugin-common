@@ -15,11 +15,11 @@ const (
 
 // RateLimit defines rate limit configuration for a command
 type RateLimit struct {
-	Command string         `json:"command"` // Command name or "*" for wildcard
-	Scope   RateLimitScope `json:"scope"`   // Use RateLimitScope constants
-	RPS     float64        `json:"rps"`     // Requests per second (can be fractional, e.g., 0.1 = 1 req per 10 sec)
-	Burst   int            `json:"burst"`   // Burst allowance
-	Cost    int            `json:"cost"`    // Token cost per request (default: 1, for commands that make multiple API calls)
+	Command string           `json:"command"` // Command name or "*" for wildcard
+	Scope   []RateLimitScope `json:"scope"`   // Scope keys (e.g., []RateLimitScope{RateLimitScopeIP}, []RateLimitScope{RateLimitScopeAPIKey, "user_id"})
+	RPS     float64          `json:"rps"`     // Requests per second (can be fractional, e.g., 0.1 = 1 req per 10 sec)
+	Burst   int              `json:"burst"`   // Burst allowance
+	Cost    int              `json:"cost"`    // Token cost per request (default: 1, for commands that make multiple API calls)
 }
 
 // CalculateRPS converts a request count and time duration to requests per second.
@@ -36,9 +36,11 @@ func CalculateRPS(requests int, duration time.Duration) float64 {
 	if duration <= 0 {
 		return 0
 	}
+
 	seconds := duration.Seconds()
 	if seconds == 0 {
 		return 0
 	}
+
 	return float64(requests) / seconds
 }

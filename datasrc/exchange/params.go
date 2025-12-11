@@ -1,4 +1,4 @@
-package cex
+package exchange
 
 import (
 	"time"
@@ -14,11 +14,12 @@ type OHLCVStreamParams struct {
 
 // GetOHLCVParams contains parameters for the getOHLCV (historical data) command
 type GetOHLCVParams struct {
-	Symbol    string     `json:"symbol" mapstructure:"symbol" validate:"required"`
-	Timeframe string     `json:"timeframe" mapstructure:"timeframe" validate:"required"`
-	StartTime *time.Time `json:"startTime,omitempty" mapstructure:"startTime"`
-	EndTime   *time.Time `json:"endTime,omitempty" mapstructure:"endTime"`
-	Limit     int        `json:"limit,omitempty" mapstructure:"limit"`
+	Symbol          string     `json:"symbol" mapstructure:"symbol" validate:"required"`
+	Timeframe       string     `json:"timeframe" mapstructure:"timeframe" validate:"required"`
+	StartTime       *time.Time `json:"startTime,omitempty" mapstructure:"startTime"`
+	EndTime         *time.Time `json:"endTime,omitempty" mapstructure:"endTime"`
+	Limit           int        `json:"limit,omitempty" mapstructure:"limit"`
+	CacheForSeconds int        `json:"cacheFor,omitempty" mapstructure:"cacheFor"` // in seconds
 }
 
 // OHLCVStreamParamsFromMap extracts OHLCVStreamParams from validated map
@@ -32,10 +33,11 @@ func OHLCVStreamParamsFromMap(data map[string]any) OHLCVStreamParams {
 // GetOHLCVParamsFromMap extracts GetOHLCVParams from validated map
 func GetOHLCVParamsFromMap(data map[string]any) GetOHLCVParams {
 	return GetOHLCVParams{
-		Symbol:    utils.GetValue[string]("symbol", data),
-		Timeframe: utils.GetValue[string]("timeframe", data),
-		StartTime: utils.ExtractTime(data, "startTime"),
-		EndTime:   utils.ExtractTime(data, "endTime"),
-		Limit:     utils.ExtractInt(data, "limit"),
+		Symbol:          utils.GetValue[string]("symbol", data),
+		Timeframe:       utils.GetValue[string]("timeframe", data),
+		StartTime:       utils.ExtractTime(data, "startTime"),
+		EndTime:         utils.ExtractTime(data, "endTime"),
+		Limit:           utils.ExtractInt(data, "limit"),
+		CacheForSeconds: utils.ExtractInt(data, "cacheFor"),
 	}
 }

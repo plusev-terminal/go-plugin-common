@@ -7,4 +7,7 @@ type Market struct {
 	Base      string `json:"base"`      // Base currency (e.g., "BTC")
 	Quote     string `json:"quote"`     // Quote currency (e.g., "USDT")
 	AssetType string `json:"assetType"` // e.g., "spot", "futures", "perpetual"
+	QuoteTick string `json:"quoteTick"` // Minimum price increment (tick size)
+	BaseTick  string `json:"baseTick"`  // Minimum quantity increment
+	Decimals  int    `json:"decimals"`  // Number of decimal places for price display
 }

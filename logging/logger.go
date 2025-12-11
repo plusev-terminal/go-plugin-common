@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/extism/go-pdk"
+	utils "github.com/plusev-terminal/go-plugin-common/wasmutils"
 )
 
 // Import the log_record host function
@@ -28,7 +29,7 @@ func NewLogger(pluginID string) *Logger {
 
 // NewLogRecord creates a new log record with the current timestamp
 func (l *Logger) NewLogRecord(eventType string) *PluginLogRecord {
-	now, err := Now()
+	now, err := utils.Now()
 	if err != nil {
 		// If we can't get time from host, use a zero time
 		// The host will override this anyway

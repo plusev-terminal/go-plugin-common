@@ -1,4 +1,4 @@
-package logging
+package wasmutils
 
 import (
 	"encoding/json"
