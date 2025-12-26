@@ -15,6 +15,7 @@ type Command struct {
 // Response represents the result of a command execution
 type Response struct {
 	Result          bool   `json:"result"`
+	ResponseType    string `json:"responseType,omitempty"`    // e.g. "StreamMarker"
 	Data            any    `json:"data,omitempty"`            // Could be direct data or a channel for streams
 	Error           string `json:"error,omitempty"`           // Error message if Success is false
 	CacheForSeconds *int64 `json:"cacheForSeconds,omitempty"` // Optional: cache duration in seconds (wrapper converts to time.Duration)
@@ -40,15 +41,17 @@ type StreamSetupResponse struct {
 	Headers         map[string]string `json:"headers,omitempty"`
 	Subprotocol     string            `json:"subprotocol,omitempty"`
 	InitialMessages []string          `json:"initialMessages"`
+	StreamContext   map[string]any    `json:"streamContext,omitempty"`
 	Error           string            `json:"error,omitempty"`
 }
 
 // StreamMessageRequest represents the request sent to plugin for message processing
 type StreamMessageRequest struct {
-	StreamID     string `json:"streamId"`
-	ConnectionID string `json:"connectionId"`
-	Message      string `json:"message"`
-	MessageType  string `json:"messageType"` // "data", "error", "close"
+	StreamID      string         `json:"streamId"`
+	ConnectionID  string         `json:"connectionId"`
+	Message       []byte         `json:"message"`
+	MessageType   string         `json:"messageType"` // "data", "error", "close"
+	StreamContext map[string]any `json:"streamContext,omitempty"`
 }
 
 // StreamMessageResponse represents plugin's response to a stream message
@@ -107,6 +110,13 @@ func SuccessResponse(data any, cacheFor ...time.Duration) Response {
 		Result: true,
 		Data:   data,
 	}
+}
+
+// SuccessTypedResponse creates a successful response with an explicit response type.
+func SuccessTypedResponse(responseType string, data any, cacheFor ...time.Duration) Response {
+	resp := SuccessResponse(data, cacheFor...)
+	resp.ResponseType = responseType
+	return resp
 }
 
 // ErrorResponse creates an error response

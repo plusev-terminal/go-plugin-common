@@ -32,6 +32,16 @@ func GetValue[T mapValue](key string, data map[string]any, defaultValue ...T) T 
 	return value
 }
 
+func ExtractMap(key string, data map[string]any) map[string]any {
+	if val, ok := data[key]; ok {
+		if subMap, ok := val.(map[string]any); ok {
+			return subMap
+		}
+	}
+
+	return nil
+}
+
 func AnyMatches[T comparable](predicate func(T) bool, values ...T) bool {
 	for _, v := range values {
 		if predicate(v) {
@@ -42,7 +52,7 @@ func AnyMatches[T comparable](predicate func(T) bool, values ...T) bool {
 }
 
 // ExtractInt safely extracts an int value from the map
-func ExtractInt(data map[string]any, key string) int {
+func ExtractInt(key string, data map[string]any) int {
 	if val, ok := data[key]; ok {
 		switch v := val.(type) {
 		case int:
@@ -58,7 +68,7 @@ func ExtractInt(data map[string]any, key string) int {
 
 // ExtractTime safely extracts a time.Time value from the map
 // Supports: string (RFC3339), time.Time, int64/float64 (unix millis)
-func ExtractTime(data map[string]any, key string) *time.Time {
+func ExtractTime(key string, data map[string]any) *time.Time {
 	if val, ok := data[key]; ok && val != nil {
 		switch v := val.(type) {
 		case string:

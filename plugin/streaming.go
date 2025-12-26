@@ -159,7 +159,7 @@ func DefaultConnectionEventHandler(event StreamConnectionEvent) StreamConnection
 }
 
 // StreamResponse is a helper to create successful data responses
-func StreamResponse(dataType string, data interface{}) StreamMessageResponse {
+func StreamResponse(dataType string, data any) StreamMessageResponse {
 	return StreamMessageResponse{
 		Success:  true,
 		Action:   "data",

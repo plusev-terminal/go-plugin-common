@@ -23,8 +23,6 @@ type AuthorContact struct {
 type ResourceAccess struct {
 	AllowedNetworkTargets []NetworkTargetRule `json:"allowedNetworkTargets"`
 	FsWriteAccess         map[string]string   `json:"fsWriteAccess"`
-	StdoutAccess          bool                `json:"stdoutAccess"`
-	StderrAccess          bool                `json:"stderrAccess"`
 }
 
 type NetworkTargetRule struct {
