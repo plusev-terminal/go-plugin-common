@@ -1,13 +1,13 @@
 package meta
 
 type Meta struct {
-	PluginID    string          `json:"pluginId"`
-	Name        string          `json:"name"`
-	AppID       string          `json:"appId"`
+	PluginID    string          `json:"pluginId" validate:"required"`
+	Name        string          `json:"name" validate:"required"`
+	AppID       string          `json:"appId" validate:"required"`
 	Category    string          `json:"category"` // Plugin category specific to the app id.
 	Description string          `json:"description"`
 	Author      string          `json:"author"`
-	Version     string          `json:"version"`
+	Version     string          `json:"version" validate:"required,semver"`
 	Repository  string          `json:"repository"`
 	Tags        []string        `json:"tags"`
 	Contacts    []AuthorContact `json:"contacts"`
