@@ -1,6 +1,9 @@
 package utils
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 type mapValue interface {
 	float64 | string | bool
@@ -49,6 +52,29 @@ func AnyMatches[T comparable](predicate func(T) bool, values ...T) bool {
 		}
 	}
 	return false
+}
+
+func NormalizeStringsAny(v any) []string {
+	arr, ok := v.([]any)
+	if !ok {
+		return nil
+	}
+
+	res := make([]string, 0, len(arr))
+
+	for _, it := range arr {
+		s, ok := it.(string)
+		if !ok {
+			continue
+		}
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+		res = append(res, s)
+	}
+
+	return res
 }
 
 // ExtractInt safely extracts an int value from the map

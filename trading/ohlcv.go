@@ -11,4 +11,5 @@ type OHLCVRecord struct {
 	Low      string `json:"low"`
 	Close    string `json:"close"`
 	Volume   string `json:"volume"`
+	IsClosed bool   `json:"isClosed,omitempty"` // True when candle is finalized/closed
 }
