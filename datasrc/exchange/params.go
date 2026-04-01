@@ -242,6 +242,33 @@ func CancelOrdersParamsFromMap(data map[string]any) CancelOrdersParams {
 	return params
 }
 
+// GetMarketParams contains parameters for the getMarket command.
+//
+// CEX sources typically identify a market by Symbol (+ optional AssetType).
+// DEX sources use Address (e.g. pool/contract address) since symbols are ambiguous across pools.
+// At least one of Symbol or Address must be provided.
+type GetMarketParams struct {
+	Symbol    string `json:"symbol,omitempty" mapstructure:"symbol"`
+	AssetType string `json:"assetType,omitempty" mapstructure:"assetType"`
+	Address   string `json:"address,omitempty" mapstructure:"address"`
+}
+
+func (p GetMarketParams) Validate() error {
+	if p.Symbol == "" && p.Address == "" {
+		return fmt.Errorf("symbol or address is required")
+	}
+	return nil
+}
+
+// GetMarketParamsFromMap extracts GetMarketParams from a validated map.
+func GetMarketParamsFromMap(data map[string]any) GetMarketParams {
+	return GetMarketParams{
+		Symbol:    utils.GetValue[string]("symbol", data),
+		AssetType: utils.GetValue[string]("assetType", data),
+		Address:   utils.GetValue[string]("address", data),
+	}
+}
+
 // OHLCVStreamParams contains parameters for the ohlcvStream command
 type OHLCVStreamParams struct {
 	// Market is required. It provides full context (assetType, base/quote, etc).
@@ -302,6 +329,95 @@ func GetOHLCVParamsFromMap(data map[string]any) GetOHLCVParams {
 	}
 	if v, ok := data["market"].(map[string]any); ok {
 		_ = utils.MapToStruct(v, &params.Market)
+	}
+	return params
+}
+
+// ---------------------------------------------------------------------------
+// Tax / History params
+// ---------------------------------------------------------------------------
+
+// GetTradeHistoryParams contains parameters for the getTradeHistory command.
+// Plugins paginate through exchange trade history and return []trading.TradeRecord.
+type GetTradeHistoryParams struct {
+	Market    tt.Market  `json:"market,omitempty" mapstructure:"market"` // Optional symbol filter
+	StartTime *time.Time `json:"startTime,omitempty" mapstructure:"startTime"`
+	EndTime   *time.Time `json:"endTime,omitempty" mapstructure:"endTime"`
+	Limit     int        `json:"limit,omitempty" mapstructure:"limit"`   // 0 = exchange default
+	Cursor    string     `json:"cursor,omitempty" mapstructure:"cursor"` // Opaque pagination cursor
+	Sort      string     `json:"sort,omitempty" mapstructure:"sort"`     // "asc" or "desc"
+}
+
+func (p GetTradeHistoryParams) Validate() error { return nil }
+
+// GetTradeHistoryParamsFromMap extracts GetTradeHistoryParams from a validated map.
+func GetTradeHistoryParamsFromMap(data map[string]any) GetTradeHistoryParams {
+	params := GetTradeHistoryParams{
+		StartTime: utils.ExtractTime("startTime", data),
+		EndTime:   utils.ExtractTime("endTime", data),
+		Limit:     utils.ExtractInt("limit", data),
+		Cursor:    utils.GetValue[string]("cursor", data),
+		Sort:      utils.GetValue[string]("sort", data),
+	}
+	if v, ok := data["market"].(map[string]any); ok {
+		_ = utils.MapToStruct(v, &params.Market)
+	}
+	return params
+}
+
+// GetOrderHistoryParams contains parameters for the getOrderHistory command.
+// Used when an exchange doesn't expose a dedicated trade/fill endpoint — the plugin
+// returns order records that the host normalises into TradeRecords.
+type GetOrderHistoryParams struct {
+	Market    tt.Market  `json:"market,omitempty" mapstructure:"market"`
+	StartTime *time.Time `json:"startTime,omitempty" mapstructure:"startTime"`
+	EndTime   *time.Time `json:"endTime,omitempty" mapstructure:"endTime"`
+	Limit     int        `json:"limit,omitempty" mapstructure:"limit"`
+	Cursor    string     `json:"cursor,omitempty" mapstructure:"cursor"`
+	Sort      string     `json:"sort,omitempty" mapstructure:"sort"`
+}
+
+func (p GetOrderHistoryParams) Validate() error { return nil }
+
+// GetOrderHistoryParamsFromMap extracts GetOrderHistoryParams from a validated map.
+func GetOrderHistoryParamsFromMap(data map[string]any) GetOrderHistoryParams {
+	params := GetOrderHistoryParams{
+		StartTime: utils.ExtractTime("startTime", data),
+		EndTime:   utils.ExtractTime("endTime", data),
+		Limit:     utils.ExtractInt("limit", data),
+		Cursor:    utils.GetValue[string]("cursor", data),
+		Sort:      utils.GetValue[string]("sort", data),
+	}
+	if v, ok := data["market"].(map[string]any); ok {
+		_ = utils.MapToStruct(v, &params.Market)
+	}
+	return params
+}
+
+// GetTransferHistoryParams contains parameters for the getTransferHistory command.
+// Plugins paginate through exchange deposit/withdrawal history and return []trading.TransferRecord.
+type GetTransferHistoryParams struct {
+	Asset     string     `json:"asset,omitempty" mapstructure:"asset"`   // Optional asset filter
+	Action    string     `json:"action,omitempty" mapstructure:"action"` // "deposit", "withdrawal", or "" for both
+	StartTime *time.Time `json:"startTime,omitempty" mapstructure:"startTime"`
+	EndTime   *time.Time `json:"endTime,omitempty" mapstructure:"endTime"`
+	Limit     int        `json:"limit,omitempty" mapstructure:"limit"`
+	Cursor    string     `json:"cursor,omitempty" mapstructure:"cursor"`
+	Sort      string     `json:"sort,omitempty" mapstructure:"sort"`
+}
+
+func (p GetTransferHistoryParams) Validate() error { return nil }
+
+// GetTransferHistoryParamsFromMap extracts GetTransferHistoryParams from a validated map.
+func GetTransferHistoryParamsFromMap(data map[string]any) GetTransferHistoryParams {
+	params := GetTransferHistoryParams{
+		Asset:     utils.GetValue[string]("asset", data),
+		Action:    utils.GetValue[string]("action", data),
+		StartTime: utils.ExtractTime("startTime", data),
+		EndTime:   utils.ExtractTime("endTime", data),
+		Limit:     utils.ExtractInt("limit", data),
+		Cursor:    utils.GetValue[string]("cursor", data),
+		Sort:      utils.GetValue[string]("sort", data),
 	}
 	return params
 }

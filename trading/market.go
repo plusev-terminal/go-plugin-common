@@ -6,7 +6,8 @@ type Market struct {
 	Symbol    string `json:"symbol"`
 	Base      string `json:"base"`
 	Quote     string `json:"quote"`
-	AssetType string `json:"assetType"` // "spot", "perpetual", "futures", "option"
+	AssetType string `json:"assetType"`         // "spot", "perpetual", "futures", "option"
+	Address   string `json:"address,omitempty"` // on-chain address (pool, contract, token mint) for DEX sources
 
 	// Precision & limits — all as string to preserve exact value
 	PriceTick    string `json:"priceTick"`             // e.g. "0.1", "0.00001"

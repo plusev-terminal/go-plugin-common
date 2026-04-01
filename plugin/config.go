@@ -7,16 +7,21 @@ import (
 // ConfigField defines a configuration field that a plugin requires
 // This is used to generate UI forms for setting up connections
 type ConfigField struct {
-	Name        string         `json:"name"`                  // Field name (e.g., "apiKey", "applicationID")
-	Label       string         `json:"label"`                 // Human-readable label for UI
-	Type        string         `json:"type"`                  // Input type: "text", "password", "number", etc.
-	Required    bool           `json:"required"`              // Whether this field is mandatory
-	Encrypt     bool           `json:"encrypt"`               // Whether to encrypt this field in database
-	Mask        bool           `json:"mask"`                  // Whether to mask this field in API responses
-	Placeholder string         `json:"placeholder,omitempty"` // Placeholder text for UI
-	Description string         `json:"description,omitempty"` // Help text explaining the field
-	Default     any            `json:"default,omitempty"`     // Default value
-	Options     map[string]any `json:"options,omitempty"`     // Type-specific options
+	Name          string                    `json:"name"`                    // Field name (e.g., "apiKey", "applicationID")
+	Label         string                    `json:"label"`                   // Human-readable label for UI
+	Type          string                    `json:"type"`                    // Input type: "text", "bool", "select".
+	Required      bool                      `json:"required"`                // Whether this field is mandatory
+	Encrypt       bool                      `json:"encrypt"`                 // Whether to encrypt this field in database
+	Mask          bool                      `json:"mask"`                    // Whether to mask this field in API responses
+	Placeholder   string                    `json:"placeholder,omitempty"`   // Placeholder text for UI
+	Description   string                    `json:"description,omitempty"`   // Help text explaining the field
+	DefaultOption string                    `json:"defaultOption,omitempty"` // For select fields, the default option value
+	Options       []ConfigFieldSelectOption `json:"options,omitempty"`       // For select fields, the available options
+}
+
+type ConfigFieldSelectOption struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
 }
 
 // ExportConfigFields exports configuration fields as JSON

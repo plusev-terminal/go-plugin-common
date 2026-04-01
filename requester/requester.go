@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/extism/go-pdk"
 	rt "github.com/plusev-terminal/go-plugin-common/requester/types"
@@ -42,6 +43,14 @@ func (d *Requester) Send(req *rt.Request, v any) (*rt.Response, error) {
 	}
 
 	if v != nil {
+		// Guard against non-JSON responses (e.g. HTML error/maintenance pages)
+		// which can cause excessive memory allocation during json.Unmarshal
+		// and crash the WASM module with "out of bounds memory access".
+		ct := res.Headers.Get("Content-Type")
+		if ct != "" && !strings.Contains(ct, "json") {
+			return &res, fmt.Errorf("unexpected Content-Type %q (expected JSON), status %d, body prefix: %.120s", ct, res.Status, string(res.Body))
+		}
+
 		if err := json.Unmarshal(res.Body, v); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal response body into target struct: %w", err)
 		}

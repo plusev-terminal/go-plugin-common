@@ -20,6 +20,7 @@ type RateLimit struct {
 	RPS     float64          `json:"rps"`     // Requests per second (can be fractional, e.g., 0.1 = 1 req per 10 sec)
 	Burst   int              `json:"burst"`   // Burst allowance
 	Cost    int              `json:"cost"`    // Token cost per request (default: 1, for commands that make multiple API calls)
+	Group   string           `json:"group"`   // Optional shared bucket name. Commands with the same group share one rate limit bucket.
 }
 
 // CalculateRPS converts a request count and time duration to requests per second.
