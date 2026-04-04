@@ -126,7 +126,7 @@ type AssetBalance struct {
 	AvailableToWithdraw string `json:"available_to_withdraw,omitempty"`
 
 	// Components provides a flexible breakdown for exchange-specific buckets.
-	// Common keys: "open_orders", "staking", "collateral", "pending_withdrawal",
+	// Common keys: "open_orders", "staking_reward", "collateral", "pending_withdrawal",
 	// "unrealized_pnl", "initial_margin", "earn", "locked", "frozen", etc.
 	Components map[string]string `json:"components,omitempty"`
 
