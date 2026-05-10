@@ -10,7 +10,8 @@ type TradeRecord struct {
 	TxID        string `json:"txId"`                  // Exchange-assigned trade/fill ID (used for dedup)
 	OrderID     string `json:"orderId,omitempty"`     // Exchange-assigned order ID
 	Timestamp   int64  `json:"timestamp"`             // Unix milliseconds
-	Symbol      string `json:"symbol"`                // Trading pair symbol, e.g. "BTC/USDT"
+	Symbol      string `json:"symbol"`                // Human-readable label, e.g. "BTC/USDT", "BTC-PERP"
+	SymbolKey   string `json:"symbolKey,omitempty"`   // Exchange-API-native symbol, e.g. "SPOT_BTC_USDT", "PERP_BTC_USDT"
 	Base        string `json:"base"`                  // Base asset, e.g. "BTC"
 	Quote       string `json:"quote"`                 // Quote asset, e.g. "USDT"
 	Side        string `json:"side"`                  // "buy" or "sell"
