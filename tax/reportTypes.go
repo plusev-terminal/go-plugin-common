@@ -87,9 +87,10 @@ type PluginReportEntry struct {
 	HoldingPeriod int    `json:"holding_period"` // Days
 	TaxCategory   string `json:"tax_category"`
 	TaxableAmount string `json:"taxable_amount"`
-	CostBasis     string `json:"cost_basis"`
-	Proceeds      string `json:"proceeds"`
-	Details       string `json:"details"` // Free-form JSON string
+	CostBasis     string `json:"cost_basis"` // Gross acquisition cost (excluding fees)
+	Proceeds      string `json:"proceeds"`   // Gross sale proceeds (excluding fees)
+	Fees          string `json:"fees"`       // Total fees deducted from PnL (open-side + close-side)
+	Details       string `json:"details"`    // Free-form JSON string
 }
 
 // PluginReportProgress is the input the plugin passes to report_progress.
@@ -108,9 +109,21 @@ type ReportSummaryRow struct {
 	Order int    `json:"order"`
 }
 
+// ReportMonthlySummary represents one month-specific summary card.
+type ReportMonthlySummary struct {
+	Month string             `json:"month"`
+	Title string             `json:"title"`
+	Rows  []ReportSummaryRow `json:"rows"`
+}
+
 // PluginReportSummary is the input the plugin passes to submit_report_summary.
 type PluginReportSummary struct {
 	Rows []ReportSummaryRow `json:"rows"`
+}
+
+// PluginReportMonthlySummaries is the input the plugin passes to submit_report_monthly_summaries.
+type PluginReportMonthlySummaries struct {
+	Summaries []ReportMonthlySummary `json:"summaries"`
 }
 
 // PluginKVPutRequest is the input for kv_put.
@@ -151,4 +164,28 @@ type PluginKVListResponse struct {
 	Result bool     `json:"result"`
 	Keys   []string `json:"keys,omitempty"`
 	Error  string   `json:"error,omitempty"`
+}
+
+// ExportEntriesInput is the input for export_entries_excel.
+// The terminal passes all report entries for the run along with metadata.
+type ExportEntriesInput struct {
+	Entries  []ExportEntry `json:"entries"`
+	Currency string        `json:"currency"` // e.g. "EUR"
+	TaxYear  int           `json:"taxYear"`
+}
+
+// ExportEntry is a single report entry passed to the plugin for Excel export.
+type ExportEntry struct {
+	TxID          string  `json:"txId"`
+	RecordType    string  `json:"recordType"`
+	Ts            string  `json:"ts"` // RFC3339
+	Asset         string  `json:"asset"`
+	Amount        float64 `json:"amount"`
+	PnL           float64 `json:"pnl"`
+	HoldingPeriod int     `json:"holdingPeriod"`
+	TaxCategory   string  `json:"taxCategory"`
+	TaxableAmount float64 `json:"taxableAmount"`
+	CostBasis     float64 `json:"costBasis"`
+	Proceeds      float64 `json:"proceeds"`
+	Details       string  `json:"details"`
 }

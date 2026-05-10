@@ -29,6 +29,10 @@ func extismReportProgress(offset uint64) uint64
 //go:noescape
 func extismSubmitReportSummary(offset uint64) uint64
 
+//go:wasmimport extism:host/user submit_report_monthly_summaries
+//go:noescape
+func extismSubmitReportMonthlySummaries(offset uint64) uint64
+
 //go:wasmimport extism:host/user kv_put
 //go:noescape
 func extismKVPut(offset uint64) uint64
@@ -157,6 +161,32 @@ func SubmitReportSummary(rows []ReportSummaryRow) error {
 
 	if !res.Result {
 		return fmt.Errorf("submit_report_summary error: %s", res.Error)
+	}
+
+	return nil
+}
+
+// SubmitReportMonthlySummaries sends month-specific summary cards to the host for storage.
+func SubmitReportMonthlySummaries(summaries []ReportMonthlySummary) error {
+	payload := PluginReportMonthlySummaries{Summaries: summaries}
+
+	inputBytes, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal monthly summaries: %w", err)
+	}
+
+	mem := pdk.AllocateBytes(inputBytes)
+	resOffset := extismSubmitReportMonthlySummaries(mem.Offset())
+	resMem := pdk.FindMemory(resOffset)
+	resBytes := resMem.ReadBytes()
+
+	var res PluginSubmitResult
+	if err := json.Unmarshal(resBytes, &res); err != nil {
+		return fmt.Errorf("failed to unmarshal result: %w", err)
+	}
+
+	if !res.Result {
+		return fmt.Errorf("submit_report_monthly_summaries error: %s", res.Error)
 	}
 
 	return nil
