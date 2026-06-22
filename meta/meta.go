@@ -13,6 +13,7 @@ type Meta struct {
 	Contacts    []AuthorContact `json:"contacts"`
 	Resources   ResourceAccess  `json:"resources"`
 	Features    []string        `json:"features"` // List of supported features
+	Chain       string          `json:"chain"`    // Blockchain identifier for chain-category plugins
 }
 
 type AuthorContact struct {
