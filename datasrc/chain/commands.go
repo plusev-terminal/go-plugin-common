@@ -8,4 +8,5 @@ const (
 	CMD_GET_STAKE_ACTIVATION   = "getStakeActivation"
 	CMD_GET_SIGNATURES         = "getSignaturesForAddress"
 	CMD_GET_TRANSACTION        = "getTransaction"
+	CMD_GET_BLOCK_TIME         = "getBlockTime"
 )
