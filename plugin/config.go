@@ -15,6 +15,7 @@ type ConfigField struct {
 	Mask          bool                      `json:"mask"`                    // Whether to mask this field in API responses
 	Placeholder   string                    `json:"placeholder,omitempty"`   // Placeholder text for UI
 	Description   string                    `json:"description,omitempty"`   // Help text explaining the field
+	Default       any                       `json:"default,omitempty"`       // Default value for text/bool/number fields
 	DefaultOption string                    `json:"defaultOption,omitempty"` // For select fields, the default option value
 	Options       []ConfigFieldSelectOption `json:"options,omitempty"`       // For select fields, the available options
 }
