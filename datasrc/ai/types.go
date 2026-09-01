@@ -45,11 +45,14 @@ type UsageMetadata struct {
 	TotalTokens    int32 `json:"totalTokens"`
 }
 
-// ModelInfo describes an available AI model.
+// ModelInfo describes an available AI model. SupportsReasoning is a
+// tri-state: nil = unknown (consumers should treat the thinking level as
+// available and let the provider decide), false = the model cannot reason.
 type ModelInfo struct {
-	Name        string `json:"name"`
-	DisplayName string `json:"displayName,omitempty"`
-	Description string `json:"description,omitempty"`
+	Name              string `json:"name"`
+	DisplayName       string `json:"displayName,omitempty"`
+	Description       string `json:"description,omitempty"`
+	SupportsReasoning *bool  `json:"supportsReasoning,omitempty"`
 }
 
 // GetModelsResponse is the response type for the getModels command.
