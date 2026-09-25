@@ -48,11 +48,20 @@ type UsageMetadata struct {
 // ModelInfo describes an available AI model. SupportsReasoning is a
 // tri-state: nil = unknown (consumers should treat the thinking level as
 // available and let the provider decide), false = the model cannot reason.
+// ContextWindow/MaxOutputTokens are the catalog's token limits — nil when
+// the source doesn't know them. ReasoningLevels lists the effort
+// vocabulary the model accepts (nil = the standard low/medium/high).
 type ModelInfo struct {
-	Name              string `json:"name"`
-	DisplayName       string `json:"displayName,omitempty"`
-	Description       string `json:"description,omitempty"`
-	SupportsReasoning *bool  `json:"supportsReasoning,omitempty"`
+	Name              string   `json:"name"`
+	DisplayName       string   `json:"displayName,omitempty"`
+	Description       string   `json:"description,omitempty"`
+	SupportsReasoning *bool    `json:"supportsReasoning,omitempty"`
+	ContextWindow     *int64   `json:"contextWindow,omitempty"`
+	MaxOutputTokens   *int64   `json:"maxOutputTokens,omitempty"`
+	ReasoningLevels   []string `json:"reasoningLevels,omitempty"`
+	// DefaultReasoningLevel is the composer default when the user hasn't
+	// picked ("" = Off); must be a member of ReasoningLevels.
+	DefaultReasoningLevel string `json:"defaultReasoningLevel,omitempty"`
 }
 
 // GetModelsResponse is the response type for the getModels command.
