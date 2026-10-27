@@ -193,3 +193,34 @@ type CancelOrderResult struct {
 
 	Extra map[string]any `json:"extra,omitempty"`
 }
+
+// ModifyOrdersResponse is the response type for the modifyOrders command.
+// Results are returned per order to support batch requests.
+type ModifyOrdersResponse struct {
+	SubmittedAt time.Time `json:"submitted_at,omitempty"`
+
+	Results []ModifyOrderResult `json:"results,omitempty"`
+
+	// Raw stores the unmodified exchange payload for debugging/support.
+	Raw json.RawMessage `json:"raw,omitempty"`
+
+	Extra map[string]any `json:"extra,omitempty"`
+}
+
+// ModifyOrderResult contains the per-order result for modifyOrders.
+//
+// The order ID is stable on a native modify; when the exchange (or the
+// plugin, via a cancelReplace) had to replace the order, Order carries the
+// new order and its OrderID differs from the requested one.
+type ModifyOrderResult struct {
+	Index int `json:"index,omitempty"`
+
+	OrderID string `json:"order_id,omitempty"`
+
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+
+	Order *Order `json:"order,omitempty"`
+
+	Extra map[string]any `json:"extra,omitempty"`
+}

@@ -242,6 +242,83 @@ func CancelOrdersParamsFromMap(data map[string]any) CancelOrdersParams {
 	return params
 }
 
+// ModifyOrdersParams contains parameters for the modifyOrders command.
+//
+// modifyOrders is an OPTIONAL command: plugins whose exchange has no native
+// order amend simply never register it, and hosts fall back to
+// cancel-and-replace. Only the fields provided on each order are changed.
+type ModifyOrdersParams struct {
+	Market tt.Market           `json:"market,omitempty" mapstructure:"market"`
+	Orders []ModifyOrderParams `json:"orders" mapstructure:"orders" validate:"required,min=1"`
+}
+
+// ModifyOrderParams represents one order modification request.
+// All numeric values are strings to preserve precision.
+type ModifyOrderParams struct {
+	OrderID string `json:"orderId" mapstructure:"orderId" validate:"required"`
+
+	// New limit price (limit and stop-limit orders).
+	Price string `json:"price,omitempty" mapstructure:"price"`
+
+	// New trigger price (stop and take-profit orders).
+	TriggerPrice string `json:"triggerPrice,omitempty" mapstructure:"triggerPrice"`
+
+	// New quantity (base currency). Omitted = unchanged.
+	Quantity string `json:"quantity,omitempty" mapstructure:"quantity"`
+}
+
+func (p ModifyOrdersParams) Validate() error {
+	if strings.TrimSpace(p.Market.Symbol) == "" {
+		return fmt.Errorf("market.symbol is required")
+	}
+	if len(p.Orders) == 0 {
+		return fmt.Errorf("orders is required")
+	}
+
+	for i, order := range p.Orders {
+		if strings.TrimSpace(order.OrderID) == "" {
+			return fmt.Errorf("orders[%d].orderId is required", i)
+		}
+
+		if order.Price == "" && order.TriggerPrice == "" && order.Quantity == "" {
+			return fmt.Errorf("orders[%d] must modify at least one of price, triggerPrice or quantity", i)
+		}
+	}
+
+	return nil
+}
+
+// ModifyOrdersParamsFromMap extracts ModifyOrdersParams from a validated map.
+func ModifyOrdersParamsFromMap(data map[string]any) ModifyOrdersParams {
+	params := ModifyOrdersParams{}
+
+	if v, ok := data["market"].(map[string]any); ok {
+		_ = utils.MapToStruct(v, &params.Market)
+	}
+
+	if rawOrders, ok := data["orders"].([]any); ok {
+		orders := make([]ModifyOrderParams, 0, len(rawOrders))
+
+		for _, raw := range rawOrders {
+			orderMap, ok := raw.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			var order ModifyOrderParams
+			if err := utils.MapToStruct(orderMap, &order); err != nil {
+				continue
+			}
+
+			orders = append(orders, order)
+		}
+
+		params.Orders = orders
+	}
+
+	return params
+}
+
 // GetMarketParams contains parameters for the getMarket command.
 //
 // CEX sources typically identify a market by Symbol (+ optional AssetType).

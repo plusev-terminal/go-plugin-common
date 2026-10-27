@@ -6,6 +6,7 @@ const (
 	CMD_GET_POSITIONS  = "getPositions"
 	CMD_GET_ORDERS     = "getOrders"
 	CMD_CREATE_ORDERS  = "createOrders"
+	CMD_MODIFY_ORDERS  = "modifyOrders"
 	CMD_CANCEL_ORDERS  = "cancelOrders"
 	CMD_GET_MARKETS    = "getMarkets"
 	CMD_GET_MARKET     = "getMarket"
@@ -26,6 +27,7 @@ func AllCommands() map[string]any {
 		"CMD_GET_POSITIONS":        CMD_GET_POSITIONS,
 		"CMD_GET_ORDERS":           CMD_GET_ORDERS,
 		"CMD_CREATE_ORDERS":        CMD_CREATE_ORDERS,
+		"CMD_MODIFY_ORDERS":        CMD_MODIFY_ORDERS,
 		"CMD_CANCEL_ORDERS":        CMD_CANCEL_ORDERS,
 		"CMD_GET_MARKETS":          CMD_GET_MARKETS,
 		"CMD_GET_MARKET":           CMD_GET_MARKET,
