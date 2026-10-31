@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/plusev-terminal/go-plugin-common/datapipe/types"
+	"github.com/plusev-terminal/go-plugin-common/v2/datapipe/types"
 )
 
 type NumberInputOption func(c *NumberInput)

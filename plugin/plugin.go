@@ -2,7 +2,7 @@ package plugin
 
 import (
 	"github.com/extism/go-pdk"
-	m "github.com/plusev-terminal/go-plugin-common/meta"
+	m "github.com/plusev-terminal/go-plugin-common/v2/meta"
 )
 
 // Plugin is the interface that plugin developers implement

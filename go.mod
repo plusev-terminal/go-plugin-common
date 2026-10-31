@@ -1,4 +1,4 @@
-module github.com/plusev-terminal/go-plugin-common
+module github.com/plusev-terminal/go-plugin-common/v2
 
 go 1.24.2
 

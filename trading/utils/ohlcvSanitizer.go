@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	tt "github.com/plusev-terminal/go-plugin-common/trading"
+	tt "github.com/plusev-terminal/go-plugin-common/v2/trading"
 )
 
 // OHLCVSanitizer processes OHLCV data batches to eliminate duplicates and fill gaps

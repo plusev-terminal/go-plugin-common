@@ -1,7 +1,7 @@
 package controls
 
 import (
-	"github.com/plusev-terminal/go-plugin-common/datapipe/types"
+	"github.com/plusev-terminal/go-plugin-common/v2/datapipe/types"
 )
 
 type Control struct {

@@ -3,7 +3,7 @@ package utils
 import (
 	"testing"
 
-	tt "github.com/plusev-terminal/go-plugin-common/trading"
+	tt "github.com/plusev-terminal/go-plugin-common/v2/trading"
 )
 
 func TestOHLCVSanitizer_RemoveDuplicates(t *testing.T) {

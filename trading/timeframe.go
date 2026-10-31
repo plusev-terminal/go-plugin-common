@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/plusev-terminal/go-plugin-common/utils"
+	"github.com/plusev-terminal/go-plugin-common/v2/utils"
 )
 
 type Unit string

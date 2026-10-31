@@ -110,6 +110,19 @@ const (
 	TimeInForceGTD      TimeInForce = "gtd"
 )
 
+// TriggerSource selects the price a conditional order triggers against.
+// Binance calls it workingType, Bybit triggerBy — one concept.
+type TriggerSource string
+
+const (
+	// TriggerSourceLast is the last traded price; the default when empty.
+	TriggerSourceLast TriggerSource = "last"
+	// TriggerSourceMark is the mark price.
+	TriggerSourceMark TriggerSource = "mark"
+	// TriggerSourceIndex is the index price.
+	TriggerSourceIndex TriggerSource = "index"
+)
+
 // Order represents a normalized order across exchanges.
 // All numeric values are strings to preserve precision.
 type Order struct {
@@ -127,6 +140,15 @@ type Order struct {
 	RemainingQuantity string `json:"remaining_quantity,omitempty"`
 	AveragePrice      string `json:"average_price,omitempty"`
 
+	// TriggerPrice is the activation price of a conditional order (stop,
+	// take-profit, trailing activation). Plugins populate it from whichever
+	// native field the order type consumes; it is THE field consumers read —
+	// do not dig through Components for trigger prices.
+	TriggerPrice string `json:"trigger_price,omitempty"`
+	// TriggerSource is the price the conditional order triggers against
+	// (last/mark/index); empty means the venue default.
+	TriggerSource TriggerSource `json:"trigger_source,omitempty"`
+
 	TimeInForce TimeInForce `json:"time_in_force,omitempty"`
 	ReduceOnly  bool        `json:"reduce_only,omitempty"`
 	PostOnly    bool        `json:"post_only,omitempty"`
@@ -134,11 +156,11 @@ type Order struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 
-	// Components provides exchange-specific breakdown values.
-	// Common keys: "fee", "fee_asset", "trigger_price", "stop_price", "take_profit_price".
+	// Components provides exchange-specific breakdown values beyond the
+	// first-class fields (e.g. "fee", "fee_asset", venue-native order ids).
+	// Trigger prices live in TriggerPrice — not here.
 	Components map[string]string `json:"components,omitempty"`
-
-	Extra map[string]any `json:"extra,omitempty"`
+	Extra      map[string]any    `json:"extra,omitempty"`
 }
 
 // CreateOrdersResponse is the response type for the createOrders command.

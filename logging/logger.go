@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/extism/go-pdk"
-	utils "github.com/plusev-terminal/go-plugin-common/wasmutils"
+	utils "github.com/plusev-terminal/go-plugin-common/v2/wasmutils"
 )
 
 // Import the log_record host function

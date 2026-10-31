@@ -3,7 +3,7 @@ package plugin
 import (
 	"fmt"
 
-	m "github.com/plusev-terminal/go-plugin-common/meta"
+	m "github.com/plusev-terminal/go-plugin-common/v2/meta"
 )
 
 // CommandHandler is a function that handles a specific command

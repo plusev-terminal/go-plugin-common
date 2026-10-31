@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	rt "github.com/plusev-terminal/go-plugin-common/requester/types"
+	rt "github.com/plusev-terminal/go-plugin-common/v2/requester/types"
 )
 
 // MockRequester implements requester.Interface for testing using standard net/http

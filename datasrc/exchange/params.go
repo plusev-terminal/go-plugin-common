@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	acct "github.com/plusev-terminal/go-plugin-common/datasrc/exchange/account"
-	tt "github.com/plusev-terminal/go-plugin-common/trading"
-	"github.com/plusev-terminal/go-plugin-common/utils"
+	acct "github.com/plusev-terminal/go-plugin-common/v2/datasrc/exchange/account"
+	tt "github.com/plusev-terminal/go-plugin-common/v2/trading"
+	"github.com/plusev-terminal/go-plugin-common/v2/utils"
 )
 
 // GetAccountParams contains optional parameters for the getAccount command.
@@ -117,8 +117,11 @@ func (p CreateOrdersParams) Validate() error {
 		if requiresTakeProfit && order.TriggerPrice == "" && order.TakeProfitPrice == "" {
 			return fmt.Errorf("orders[%d].triggerPrice or orders[%d].takeProfitPrice is required for type %s", i, i, order.Type)
 		}
-		if requiresTrailing && order.TrailingDelta == "" {
-			return fmt.Errorf("orders[%d].trailingDelta is required for type %s", i, order.Type)
+		if requiresTrailing && order.TrailingAmount == "" && order.TrailingPercent == "" {
+			return fmt.Errorf("orders[%d].trailingAmount or orders[%d].trailingPercent is required for type %s", i, i, order.Type)
+		}
+		if order.TimeInForce == acct.TimeInForceGTD && order.ExpireTime == "" {
+			return fmt.Errorf("orders[%d].expireTime is required for timeInForce gtd", i)
 		}
 	}
 	return nil
@@ -126,9 +129,12 @@ func (p CreateOrdersParams) Validate() error {
 
 // CreateOrderParams represents one normalized order request.
 // All numeric values are strings to preserve precision.
+//
+// Scope routing: the market the order belongs to is Market — its AssetType is
+// the ONLY routing dimension (spot hosts vs derivatives hosts). There is
+// deliberately no separate scope field: one taxonomy, one source of truth.
 type CreateOrderParams struct {
-	Market tt.Market      `json:"market,omitempty" mapstructure:"market"`
-	Scope  acct.ScopeType `json:"scope,omitempty" mapstructure:"scope"`
+	Market tt.Market `json:"market,omitempty" mapstructure:"market"`
 
 	Side acct.OrderSide `json:"side" mapstructure:"side" validate:"required"`
 	Type acct.OrderType `json:"type" mapstructure:"type" validate:"required"`
@@ -137,16 +143,36 @@ type CreateOrderParams struct {
 	QuoteQuantity string `json:"quoteQuantity,omitempty" mapstructure:"quoteQuantity"`
 	Price         string `json:"price,omitempty" mapstructure:"price"`
 
+	// TriggerPrice is the activation price of a conditional order (stop loss,
+	// take profit, trailing activation). Which normalized type consumes it is
+	// defined by Type; StopPrice/TakeProfitPrice remain as type-specific
+	// aliases for callers that build orders field-by-field — when several are
+	// set, plugins resolve TriggerPrice > the alias matching Type.
 	TriggerPrice    string `json:"triggerPrice,omitempty" mapstructure:"triggerPrice"`
 	StopPrice       string `json:"stopPrice,omitempty" mapstructure:"stopPrice"`
 	TakeProfitPrice string `json:"takeProfitPrice,omitempty" mapstructure:"takeProfitPrice"`
-	TrailingDelta   string `json:"trailingDelta,omitempty" mapstructure:"trailingDelta"`
+
+	// Trailing stop distance. Exactly one unit per venue: TrailingAmount is
+	// an absolute price distance; TrailingPercent is a percentage of the
+	// reference price (e.g. Binance callbackRate 1.5 = 1.5%). ActivationPrice
+	// optionally gates when trailing starts.
+	TrailingAmount  string `json:"trailingAmount,omitempty" mapstructure:"trailingAmount"`
+	TrailingPercent string `json:"trailingPercent,omitempty" mapstructure:"trailingPercent"`
 	ActivationPrice string `json:"activationPrice,omitempty" mapstructure:"activationPrice"`
 
 	TimeInForce   acct.TimeInForce `json:"timeInForce,omitempty" mapstructure:"timeInForce"`
 	ReduceOnly    bool             `json:"reduceOnly,omitempty" mapstructure:"reduceOnly"`
 	PostOnly      bool             `json:"postOnly,omitempty" mapstructure:"postOnly"`
 	ClosePosition bool             `json:"closePosition,omitempty" mapstructure:"closePosition"`
+
+	// TriggerSource selects the price a conditional order triggers against:
+	// last traded price (default when empty), mark price, or index price
+	// (Binance workingType, Bybit triggerBy — same concept).
+	TriggerSource acct.TriggerSource `json:"triggerSource,omitempty" mapstructure:"triggerSource"`
+
+	// ExpireTime is the good-until instant for TimeInForceGTD, in Unix
+	// milliseconds. Required when TimeInForce is GTD.
+	ExpireTime string `json:"expireTime,omitempty" mapstructure:"expireTime"`
 
 	ClientOrderID string `json:"clientOrderId,omitempty" mapstructure:"clientOrderId"`
 	GroupID       string `json:"groupId,omitempty" mapstructure:"groupId"`

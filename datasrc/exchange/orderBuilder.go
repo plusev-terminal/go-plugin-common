@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	acct "github.com/plusev-terminal/go-plugin-common/datasrc/exchange/account"
-	tt "github.com/plusev-terminal/go-plugin-common/trading"
+	acct "github.com/plusev-terminal/go-plugin-common/v2/datasrc/exchange/account"
+	tt "github.com/plusev-terminal/go-plugin-common/v2/trading"
 )
 
 // ── Standalone constructors ─────────────────────────────────────────────────
@@ -65,16 +65,16 @@ func NewTakeProfit(market tt.Market, side acct.OrderSide, qty, tpPrice string) C
 	}
 }
 
-// NewTrailingStop creates a trailing-stop order.
-// The order is marked reduce-only.
-func NewTrailingStop(market tt.Market, side acct.OrderSide, qty, trailingDelta string) CreateOrderParams {
+// NewTrailingStop creates a trailing-stop order trailing by an absolute price
+// distance. The order is marked reduce-only.
+func NewTrailingStop(market tt.Market, side acct.OrderSide, qty, trailingAmount string) CreateOrderParams {
 	return CreateOrderParams{
-		Market:        market,
-		Side:          side,
-		Type:          acct.OrderTypeTrailingStop,
-		Quantity:      qty,
-		TrailingDelta: trailingDelta,
-		ReduceOnly:    true,
+		Market:         market,
+		Side:           side,
+		Type:           acct.OrderTypeTrailingStop,
+		Quantity:       qty,
+		TrailingAmount: trailingAmount,
+		ReduceOnly:     true,
 	}
 }
 
@@ -153,11 +153,12 @@ func (b *OrderBuilder) TakeProfitMarket(qty, tpPrice string) *OrderBuilder {
 	return b
 }
 
-// TrailingStop sets the order type to trailing-stop with the given quantity and trailing delta.
-func (b *OrderBuilder) TrailingStop(qty, trailingDelta string) *OrderBuilder {
+// TrailingStop sets the order type to trailing-stop with the given quantity
+// and absolute trailing distance.
+func (b *OrderBuilder) TrailingStop(qty, trailingAmount string) *OrderBuilder {
 	b.p.Type = acct.OrderTypeTrailingStop
 	b.p.Quantity = qty
-	b.p.TrailingDelta = trailingDelta
+	b.p.TrailingAmount = trailingAmount
 	return b
 }
 
