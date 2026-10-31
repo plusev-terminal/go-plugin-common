@@ -87,6 +87,10 @@ func meta() int32 {
 				pluginMeta.Features = append(pluginMeta.Features, cmd)
 			}
 		}
+
+		// Plugin-declared rate-limit priority classes (m.CommandInfo); nil
+		// when none declared → the field is omitted from the meta JSON.
+		pluginMeta.Commands = pluginRouter.CommandPriorities()
 	}
 
 	pdk.OutputJSON(pluginMeta)
