@@ -28,4 +28,9 @@ type ResourceAccess struct {
 
 type NetworkTargetRule struct {
 	Pattern string `json:"pattern"`
+	// Limits optionally declares outbound rate limits enforced by the host
+	// for this pattern's HOST; see RateLimitRule for the semantics. The
+	// host ignores limits on wildcard-host patterns (*.x.com).
+	Limits         []RateLimitRule `json:"limits,omitempty"`
+	TradingReserve *float64        `json:"tradingReserve,omitempty"`
 }

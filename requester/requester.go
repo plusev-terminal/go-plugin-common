@@ -2,7 +2,6 @@ package requester
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -38,8 +37,8 @@ func (d *Requester) Send(req *rt.Request, v any) (*rt.Response, error) {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	if res.Error != "" {
-		return nil, errors.New(res.Error)
+	if err := rt.ErrorFromResponse(&res); err != nil {
+		return nil, err
 	}
 
 	if v != nil {
