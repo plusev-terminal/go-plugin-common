@@ -65,6 +65,10 @@ type NetworkTargetRule struct {
 	// Limits optionally declares outbound rate limits enforced by the host
 	// for this pattern's HOST; see RateLimitRule for the semantics. The
 	// host ignores limits on wildcard-host patterns (*.x.com).
-	Limits         []RateLimitRule `json:"limits,omitempty"`
-	TradingReserve *float64        `json:"tradingReserve,omitempty"`
+	Limits []RateLimitRule `json:"limits,omitempty"`
+	// UsageHeaders optionally names server response headers carrying live
+	// rate-limit usage for this pattern's HOST; see UsageHeader. The host
+	// ignores them on wildcard-host patterns (*.x.com).
+	UsageHeaders   []UsageHeader `json:"usageHeaders,omitempty"`
+	TradingReserve *float64      `json:"tradingReserve,omitempty"`
 }

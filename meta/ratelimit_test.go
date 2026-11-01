@@ -110,3 +110,22 @@ func TestRateLimitRuleHelpers(t *testing.T) {
 		t.Fatal("ForPaths must not leak into earlier copies")
 	}
 }
+
+func TestNetworkTargetRule_UsageHeadersJSON(t *testing.T) {
+	rule := NetworkTargetRule{
+		Pattern: "https://api.example.com/*",
+		UsageHeaders: []UsageHeader{
+			{Prefix: "x-acme-used-weight-", Name: "used-weight-", Field: UsageFieldUsed},
+		},
+	}
+
+	data, err := json.Marshal(rule)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	want := `{"pattern":"https://api.example.com/*","usageHeaders":[{"prefix":"x-acme-used-weight-","name":"used-weight-","field":"used"}]}`
+	if string(data) != want {
+		t.Fatalf("Expected %s, got %s", want, string(data))
+	}
+}

@@ -93,3 +93,23 @@ func (r RateLimitRule) ForPaths(prefixes ...string) RateLimitRule {
 	r.Paths = append([]string(nil), prefixes...)
 	return r
 }
+
+// UsageField names the ServerUsage field a usage header feeds.
+const (
+	UsageFieldUsed      = "used"
+	UsageFieldLimit     = "limit"
+	UsageFieldRemaining = "remaining"
+)
+
+// UsageHeader declares one family of server response headers that carry
+// live rate-limit usage, so the host can show it on its Rate Limits page.
+// Header names are matched case-insensitively by Prefix; whatever follows
+// the prefix is appended to Name, so one entry covers every window variant
+// of a family (e.g. prefix "x-acme-used-weight-" matches
+// "X-Acme-Used-Weight-1m" as usage entry "used-weight-1m"). Usage headers
+// are display-only: they never affect enforcement.
+type UsageHeader struct {
+	Prefix string `json:"prefix"` // lowercase header-name prefix, e.g. "x-acme-used-weight-"
+	Name   string `json:"name"`   // lowercase usage entry name prefix, suffix appended
+	Field  string `json:"field"`  // one of the UsageField* constants
+}
