@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -59,12 +60,18 @@ type CancelOrdersParams struct {
 }
 
 func (p CancelOrdersParams) Validate() error {
-	if len(p.IDs) == 0 {
-		return nil
-	}
-	if strings.TrimSpace(p.Market.Symbol) == "" {
+	hasMarket := strings.TrimSpace(p.Market.Symbol) != ""
+
+	if len(p.IDs) > 0 && !hasMarket {
 		return fmt.Errorf("market.symbol is required")
 	}
+
+	// A market decides the venue endpoint (spot vs derivatives) — and for
+	// cancel-all, WHICH book is cleared — so its type must be explicit.
+	if hasMarket && !p.Market.AssetType.Valid() {
+		return fmt.Errorf("market.assetType is required and must be one of %s (got %q)", assetTypeList(), p.Market.AssetType)
+	}
+
 	return nil
 }
 
@@ -75,6 +82,9 @@ func (p CreateOrdersParams) Validate() error {
 	for i, order := range p.Orders {
 		if order.Market.Symbol == "" {
 			return fmt.Errorf("orders[%d].market.symbol is required", i)
+		}
+		if !order.Market.AssetType.Valid() {
+			return fmt.Errorf("orders[%d].market.assetType is required and must be one of %s (got %q)", i, assetTypeList(), order.Market.AssetType)
 		}
 		if order.Side == "" || order.Side == acct.OrderSideUnknown {
 			return fmt.Errorf("orders[%d].side is required", i)
@@ -120,8 +130,17 @@ func (p CreateOrdersParams) Validate() error {
 		if requiresTrailing && order.TrailingAmount == "" && order.TrailingPercent == "" {
 			return fmt.Errorf("orders[%d].trailingAmount or orders[%d].trailingPercent is required for type %s", i, i, order.Type)
 		}
+		if order.TrailingAmount != "" && order.TrailingPercent != "" {
+			return fmt.Errorf("orders[%d] sets both trailingAmount and trailingPercent; set exactly one", i)
+		}
 		if order.TimeInForce == acct.TimeInForceGTD && order.ExpireTime == "" {
 			return fmt.Errorf("orders[%d].expireTime is required for timeInForce gtd", i)
+		}
+		if order.ExpireTime != "" && order.TimeInForce != acct.TimeInForceGTD {
+			return fmt.Errorf("orders[%d].expireTime requires timeInForce gtd", i)
+		}
+		if order.TriggerSource != "" && !order.TriggerSource.Valid() {
+			return fmt.Errorf("orders[%d].triggerSource %q is unknown (want last, mark or index)", i, order.TriggerSource)
 		}
 	}
 	return nil
@@ -130,9 +149,14 @@ func (p CreateOrdersParams) Validate() error {
 // CreateOrderParams represents one normalized order request.
 // All numeric values are strings to preserve precision.
 //
-// Scope routing: the market the order belongs to is Market — its AssetType is
-// the ONLY routing dimension (spot hosts vs derivatives hosts). There is
-// deliberately no separate scope field: one taxonomy, one source of truth.
+// Routing: Market identifies the instrument, and its AssetType (required —
+// see CreateOrdersParams.Validate) decides which venue endpoint serves the
+// order. There is deliberately no second instrument taxonomy (the v1 Scope
+// field is gone). Account and margin mode — spot cash vs margin wallet,
+// cross vs isolated — are the venue/account default; the contract has no
+// field for them yet. Like every optional feature, such a field will be
+// capability-gated (see OrderCapabilities): plugins that do not declare it
+// never receive it.
 type CreateOrderParams struct {
 	Market tt.Market `json:"market,omitempty" mapstructure:"market"`
 
@@ -166,12 +190,13 @@ type CreateOrderParams struct {
 	ClosePosition bool             `json:"closePosition,omitempty" mapstructure:"closePosition"`
 
 	// TriggerSource selects the price a conditional order triggers against:
-	// last traded price (default when empty), mark price, or index price
-	// (Binance workingType, Bybit triggerBy — same concept).
+	// last traded price, mark price or index price (Binance workingType,
+	// Bybit triggerBy — same concept). Empty means the venue default
+	// (OrderCapabilities.DefaultTriggerSource), which differs per venue.
 	TriggerSource acct.TriggerSource `json:"triggerSource,omitempty" mapstructure:"triggerSource"`
 
 	// ExpireTime is the good-until instant for TimeInForceGTD, in Unix
-	// milliseconds. Required when TimeInForce is GTD.
+	// milliseconds. Required with GTD and rejected without it.
 	ExpireTime string `json:"expireTime,omitempty" mapstructure:"expireTime"`
 
 	ClientOrderID string `json:"clientOrderId,omitempty" mapstructure:"clientOrderId"`
@@ -258,6 +283,111 @@ func CreateOrdersParamsFromMap(data map[string]any) CreateOrdersParams {
 	return params
 }
 
+// createOrderKeys is the set of wire keys CreateOrderParams defines.
+var createOrderKeys = func() map[string]bool {
+	keys := map[string]bool{}
+	t := reflect.TypeOf(CreateOrderParams{})
+
+	for i := 0; i < t.NumField(); i++ {
+		name := strings.Split(t.Field(i).Tag.Get("mapstructure"), ",")[0]
+
+		if name == "" {
+			name = t.Field(i).Name
+		}
+
+		keys[name] = true
+	}
+
+	return keys
+}()
+
+// ParseCreateOrdersParams is the strict counterpart of
+// CreateOrdersParamsFromMap: it REJECTS orders that do not parse and keys the
+// contract does not define, where the lenient variant skips them. A
+// misspelled or retired field (v1's trailingDelta or scope, a flat symbol)
+// must fail loudly instead of vanishing — and a malformed stop-loss leg must
+// never silently drop out of a bracket while its entry is placed. Market
+// objects may carry extra keys (pickers decorate them); only order-level and
+// batch-level keys are checked. The host runs this before dispatch.
+func ParseCreateOrdersParams(data map[string]any) (CreateOrdersParams, error) {
+	params := CreateOrdersParams{}
+
+	for key := range data {
+		if key != "orders" && key != "cancelGroupOnFailure" {
+			return params, fmt.Errorf("unknown createOrders parameter %q", key)
+		}
+	}
+
+	if v, ok := data["cancelGroupOnFailure"]; ok {
+		b, isBool := v.(bool)
+
+		if !isBool {
+			return params, fmt.Errorf("cancelGroupOnFailure must be a boolean")
+		}
+
+		params.CancelGroupOnFailure = b
+	}
+
+	var rawOrders []map[string]any
+
+	switch v := data["orders"].(type) {
+	case []any:
+		for i, raw := range v {
+			orderMap, ok := raw.(map[string]any)
+
+			if !ok {
+				return params, fmt.Errorf("orders[%d] must be an object", i)
+			}
+
+			rawOrders = append(rawOrders, orderMap)
+		}
+	case []map[string]any:
+		rawOrders = v
+	default:
+		return params, fmt.Errorf("orders must be a list")
+	}
+
+	for i, orderMap := range rawOrders {
+		for key := range orderMap {
+			if !createOrderKeys[key] {
+				return params, fmt.Errorf("orders[%d]: unknown field %q", i, key)
+			}
+		}
+
+		var order CreateOrderParams
+
+		if err := utils.MapToStruct(orderMap, &order); err != nil {
+			return params, fmt.Errorf("orders[%d]: %w", i, err)
+		}
+
+		params.Orders = append(params.Orders, order)
+	}
+
+	return params, nil
+}
+
+// assetTypeList renders the contract's asset type vocabulary for errors.
+func assetTypeList() string {
+	types := tt.AssetTypes()
+	parts := make([]string, 0, len(types))
+
+	for _, t := range types {
+		parts = append(parts, string(t))
+	}
+
+	return strings.Join(parts, ", ")
+}
+
+// validateOptionalAssetType rejects asset types outside the vocabulary; the
+// empty value (unspecified) is left to the venue's ResolveAssetType.
+func validateOptionalAssetType(field string, a tt.AssetType) error {
+	if a != "" && !a.Valid() {
+		return fmt.Errorf("%s %q is unknown (want one of %s)", field, a, assetTypeList())
+	}
+
+	return nil
+}
+
 // CancelOrdersParamsFromMap extracts CancelOrdersParams from a validated map.
 func CancelOrdersParamsFromMap(data map[string]any) CancelOrdersParams {
 	params := CancelOrdersParams{}
@@ -296,6 +426,9 @@ type ModifyOrderParams struct {
 func (p ModifyOrdersParams) Validate() error {
 	if strings.TrimSpace(p.Market.Symbol) == "" {
 		return fmt.Errorf("market.symbol is required")
+	}
+	if !p.Market.AssetType.Valid() {
+		return fmt.Errorf("market.assetType is required and must be one of %s (got %q)", assetTypeList(), p.Market.AssetType)
 	}
 	if len(p.Orders) == 0 {
 		return fmt.Errorf("orders is required")
@@ -351,23 +484,23 @@ func ModifyOrdersParamsFromMap(data map[string]any) ModifyOrdersParams {
 // DEX sources use Address (e.g. pool/contract address) since symbols are ambiguous across pools.
 // At least one of Symbol or Address must be provided.
 type GetMarketParams struct {
-	Symbol    string `json:"symbol,omitempty" mapstructure:"symbol"`
-	AssetType string `json:"assetType,omitempty" mapstructure:"assetType"`
-	Address   string `json:"address,omitempty" mapstructure:"address"`
+	Symbol    string       `json:"symbol,omitempty" mapstructure:"symbol"`
+	AssetType tt.AssetType `json:"assetType,omitempty" mapstructure:"assetType"`
+	Address   string       `json:"address,omitempty" mapstructure:"address"`
 }
 
 func (p GetMarketParams) Validate() error {
 	if p.Symbol == "" && p.Address == "" {
 		return fmt.Errorf("symbol or address is required")
 	}
-	return nil
+	return validateOptionalAssetType("assetType", p.AssetType)
 }
 
 // GetMarketParamsFromMap extracts GetMarketParams from a validated map.
 func GetMarketParamsFromMap(data map[string]any) GetMarketParams {
 	return GetMarketParams{
 		Symbol:    utils.GetValue[string]("symbol", data),
-		AssetType: utils.GetValue[string]("assetType", data),
+		AssetType: tt.AssetType(utils.GetValue[string]("assetType", data)),
 		Address:   utils.GetValue[string]("address", data),
 	}
 }
@@ -386,7 +519,7 @@ func (p OHLCVStreamParams) Validate() error {
 	if p.Market.Symbol == "" {
 		return fmt.Errorf("market.symbol is required")
 	}
-	return nil
+	return validateOptionalAssetType("market.assetType", p.Market.AssetType)
 }
 
 // GetOHLCVParams contains parameters for the getOHLCV (historical data) command
@@ -408,7 +541,7 @@ func (p GetOHLCVParams) Validate() error {
 	if p.Market.Symbol == "" {
 		return fmt.Errorf("market.symbol is required")
 	}
-	return nil
+	return validateOptionalAssetType("market.assetType", p.Market.AssetType)
 }
 
 // OHLCVStreamParamsFromMap extracts OHLCVStreamParams from validated map

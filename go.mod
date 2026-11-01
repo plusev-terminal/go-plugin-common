@@ -17,3 +17,7 @@ require (
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 )
+
+// v2.0.0 added trading.Market.Extra, which breaks GORM AutoMigrate of models
+// embedding trading.Market; v2.0.1 removed it again.
+retract v2.0.0

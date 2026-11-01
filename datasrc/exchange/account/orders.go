@@ -2,6 +2,7 @@ package account
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -111,17 +112,49 @@ const (
 )
 
 // TriggerSource selects the price a conditional order triggers against.
-// Binance calls it workingType, Bybit triggerBy — one concept.
+// Binance calls it workingType, Bybit triggerBy, Orderly trigger_price_type —
+// one concept.
+//
+// The empty TriggerSource means "the venue's default", which differs per
+// venue (Binance and Bybit trigger on the last price, Orderly on the mark
+// price); venues publish theirs as OrderCapabilities.DefaultTriggerSource.
+// Consumers that care which price trips a stop must set it explicitly.
 type TriggerSource string
 
 const (
-	// TriggerSourceLast is the last traded price; the default when empty.
+	// TriggerSourceLast is the last traded price.
 	TriggerSourceLast TriggerSource = "last"
 	// TriggerSourceMark is the mark price.
 	TriggerSourceMark TriggerSource = "mark"
 	// TriggerSourceIndex is the index price.
 	TriggerSourceIndex TriggerSource = "index"
 )
+
+// Valid reports whether s is one of the defined trigger sources. The empty
+// TriggerSource (venue default) is not Valid — check it separately.
+func (s TriggerSource) Valid() bool {
+	switch s {
+	case TriggerSourceLast, TriggerSourceMark, TriggerSourceIndex:
+		return true
+	}
+
+	return false
+}
+
+// OptionalPrice normalizes a venue price field for the normalized Order and
+// Position shapes: an absent price is the empty string, never a "0"
+// placeholder. Venues fill unused price fields with zeros (Binance sends
+// price "0" on stop-market orders and stopPrice "0" on plain limit orders),
+// and a consumer must not read those as real prices.
+func OptionalPrice(s string) string {
+	s = strings.TrimSpace(s)
+
+	if s == "" || strings.Trim(s, "0.+-") == "" {
+		return ""
+	}
+
+	return s
+}
 
 // Order represents a normalized order across exchanges.
 // All numeric values are strings to preserve precision.
@@ -134,6 +167,9 @@ type Order struct {
 	Type   OrderType   `json:"type,omitempty"`
 	Status OrderStatus `json:"status,omitempty"`
 
+	// Price is the limit price; empty for market-type orders. Absent prices
+	// (here and in TriggerPrice/AveragePrice) are "", never "0" — plugins
+	// normalize venue placeholders with OptionalPrice.
 	Price             string `json:"price,omitempty"`
 	Quantity          string `json:"quantity,omitempty"`
 	ExecutedQuantity  string `json:"executed_quantity,omitempty"`
@@ -141,9 +177,10 @@ type Order struct {
 	AveragePrice      string `json:"average_price,omitempty"`
 
 	// TriggerPrice is the activation price of a conditional order (stop,
-	// take-profit, trailing activation). Plugins populate it from whichever
-	// native field the order type consumes; it is THE field consumers read —
-	// do not dig through Components for trigger prices.
+	// take-profit, trailing activation); empty for non-conditional orders.
+	// Plugins populate it from whichever native field the order type
+	// consumes; it is THE field consumers read — do not dig through
+	// Components for trigger prices.
 	TriggerPrice string `json:"trigger_price,omitempty"`
 	// TriggerSource is the price the conditional order triggers against
 	// (last/mark/index); empty means the venue default.

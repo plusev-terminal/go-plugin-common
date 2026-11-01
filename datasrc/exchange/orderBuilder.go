@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	acct "github.com/plusev-terminal/go-plugin-common/v2/datasrc/exchange/account"
@@ -210,6 +211,32 @@ func (b *OrderBuilder) QuoteQuantity(qty string) *OrderBuilder {
 	return b
 }
 
+// TrailingStopPercent sets the order type to trailing-stop trailing by a
+// percentage of the reference price (Binance callbackRate, Orderly
+// callback_rate: "1.5" = 1.5%).
+func (b *OrderBuilder) TrailingStopPercent(qty, trailingPercent string) *OrderBuilder {
+	b.p.Type = acct.OrderTypeTrailingStop
+	b.p.Quantity = qty
+	b.p.TrailingPercent = trailingPercent
+	return b
+}
+
+// TriggerSource sets the price conditional orders trigger against (last,
+// mark or index). On a group (BuildGroup) it applies to the stop-loss and
+// take-profit legs — a market or limit entry has nothing to trigger.
+func (b *OrderBuilder) TriggerSource(src acct.TriggerSource) *OrderBuilder {
+	b.p.TriggerSource = src
+	return b
+}
+
+// ExpireAt makes the order good-till-date: TimeInForce GTD expiring at the
+// given instant (Unix milliseconds).
+func (b *OrderBuilder) ExpireAt(expireMs int64) *OrderBuilder {
+	b.p.TimeInForce = acct.TimeInForceGTD
+	b.p.ExpireTime = strconv.FormatInt(expireMs, 10)
+	return b
+}
+
 // ActivationPrice sets the activation price (used by some trailing stop implementations).
 func (b *OrderBuilder) ActivationPrice(price string) *OrderBuilder {
 	b.p.ActivationPrice = price
@@ -271,7 +298,14 @@ func (b *OrderBuilder) BuildGroup() ([]CreateOrderParams, error) {
 	}
 
 	closeSide := oppositeSide(b.p.Side)
-	orders := []CreateOrderParams{b.p}
+	triggerSource := b.p.TriggerSource
+	entry := b.p
+
+	if !isConditionalType(entry.Type) {
+		entry.TriggerSource = ""
+	}
+
+	orders := []CreateOrderParams{entry}
 
 	if b.sl != nil {
 		b.sl.Market = b.p.Market
@@ -279,6 +313,7 @@ func (b *OrderBuilder) BuildGroup() ([]CreateOrderParams, error) {
 		b.sl.Quantity = b.p.Quantity
 		b.sl.ReduceOnly = true
 		b.sl.GroupID = b.p.GroupID
+		b.sl.TriggerSource = triggerSource
 		orders = append(orders, *b.sl)
 	}
 
@@ -288,10 +323,23 @@ func (b *OrderBuilder) BuildGroup() ([]CreateOrderParams, error) {
 		b.tp.Quantity = b.p.Quantity
 		b.tp.ReduceOnly = true
 		b.tp.GroupID = b.p.GroupID
+		b.tp.TriggerSource = triggerSource
 		orders = append(orders, *b.tp)
 	}
 
 	return orders, nil
+}
+
+// isConditionalType reports whether orders of type t wait for a trigger price.
+func isConditionalType(t acct.OrderType) bool {
+	switch t {
+	case acct.OrderTypeStop, acct.OrderTypeStopLimit, acct.OrderTypeStopMarket,
+		acct.OrderTypeTakeProfit, acct.OrderTypeTakeProfitLimit, acct.OrderTypeTakeProfitMarket,
+		acct.OrderTypeTrailingStop:
+		return true
+	}
+
+	return false
 }
 
 // ── Deprecated ──────────────────────────────────────────────────────────────

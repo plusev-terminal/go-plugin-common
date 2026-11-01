@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"github.com/extism/go-pdk"
+	ex "github.com/plusev-terminal/go-plugin-common/v2/datasrc/exchange"
 	m "github.com/plusev-terminal/go-plugin-common/v2/meta"
 )
 
@@ -32,6 +33,16 @@ type Plugin interface {
 	// RegisterCommands registers command handlers with the router
 	// Example: router.Register("getMarkets", p.handleGetMarkets)
 	RegisterCommands(router *CommandRouter)
+}
+
+// OrderCapabilityProvider is implemented by plugins that register the
+// createOrders command. The host reads the declaration once per instance
+// (wasm export get_order_capabilities) and rejects every order that uses a
+// feature it does not list — see exchange.OrderCapabilities. A plugin that
+// registers createOrders without implementing this gets all orders rejected
+// with a clear error: declaring capabilities is mandatory from v2.1.0 on.
+type OrderCapabilityProvider interface {
+	GetOrderCapabilities() ex.OrderCapabilities
 }
 
 // Global state managed by RegisterPlugin
@@ -100,6 +111,22 @@ func meta() int32 {
 //go:wasmexport get_configuration_fields
 func get_configuration_fields() int32 {
 	return ExportConfigFields(registeredPlugin.GetConfigFields())
+}
+
+//go:wasmexport get_order_capabilities
+func get_order_capabilities() int32 {
+	if provider, ok := registeredPlugin.(OrderCapabilityProvider); ok {
+		caps := provider.GetOrderCapabilities()
+		pdk.OutputJSON(caps)
+
+		return 0
+	}
+
+	// JSON null: built against v2.1.0+ but declares nothing. The host tells
+	// this apart from a missing export (pre-v2.1.0 build → legacy baseline).
+	pdk.OutputJSON(nil)
+
+	return 0
 }
 
 //go:wasmexport get_rate_limits

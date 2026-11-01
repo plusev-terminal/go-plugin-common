@@ -7,21 +7,21 @@ package trading
 // This is the common response type for getTradeHistory / getOrderHistory commands.
 // Each datasrc plugin normalizes its exchange-specific trade format into this struct.
 type TradeRecord struct {
-	TxID        string `json:"txId"`                  // Exchange-assigned trade/fill ID (used for dedup)
-	OrderID     string `json:"orderId,omitempty"`     // Exchange-assigned order ID
-	Timestamp   int64  `json:"timestamp"`             // Unix milliseconds
-	Symbol      string `json:"symbol"`                // Human-readable label, e.g. "BTC/USDT", "BTC-PERP"
-	SymbolKey   string `json:"symbolKey,omitempty"`   // Exchange-API-native symbol, e.g. "SPOT_BTC_USDT", "PERP_BTC_USDT"
-	Base        string `json:"base"`                  // Base asset, e.g. "BTC"
-	Quote       string `json:"quote"`                 // Quote asset, e.g. "USDT"
-	Side        string `json:"side"`                  // "buy" or "sell"
-	Price       string `json:"price"`                 // Execution price in quote currency
-	Amount      string `json:"amount"`                // Quantity of base asset
-	Fee         string `json:"fee,omitempty"`         // Fee amount
-	FeeCurrency string `json:"feeCurrency,omitempty"` // Currency of the fee
-	OrderType   string `json:"orderType,omitempty"`   // "maker" or "taker"
-	AssetType   string `json:"assetType,omitempty"`   // "spot", "perpetual", "futures", "option"
-	Account     string `json:"account,omitempty"`     // Account or sub-account label
+	TxID        string    `json:"txId"`                  // Exchange-assigned trade/fill ID (used for dedup)
+	OrderID     string    `json:"orderId,omitempty"`     // Exchange-assigned order ID
+	Timestamp   int64     `json:"timestamp"`             // Unix milliseconds
+	Symbol      string    `json:"symbol"`                // Human-readable label, e.g. "BTC/USDT", "BTC-PERP"
+	SymbolKey   string    `json:"symbolKey,omitempty"`   // Exchange-API-native symbol, e.g. "SPOT_BTC_USDT", "PERP_BTC_USDT"
+	Base        string    `json:"base"`                  // Base asset, e.g. "BTC"
+	Quote       string    `json:"quote"`                 // Quote asset, e.g. "USDT"
+	Side        string    `json:"side"`                  // "buy" or "sell"
+	Price       string    `json:"price"`                 // Execution price in quote currency
+	Amount      string    `json:"amount"`                // Quantity of base asset
+	Fee         string    `json:"fee,omitempty"`         // Fee amount
+	FeeCurrency string    `json:"feeCurrency,omitempty"` // Currency of the fee
+	OrderType   string    `json:"orderType,omitempty"`   // "maker" or "taker"
+	AssetType   AssetType `json:"assetType,omitempty"`   // contract vocabulary (see AssetType); "" = unspecified
+	Account     string    `json:"account,omitempty"`     // Account or sub-account label
 
 	// Precision hints (optional, may be 0 if not provided by the exchange)
 	PricePrecision    int `json:"pricePrecision,omitempty"`
