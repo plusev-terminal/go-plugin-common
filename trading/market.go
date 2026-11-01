@@ -52,10 +52,6 @@ type Market struct {
 	// Optional derived UI helpers (safe as int)
 	PricePrecision    int `json:"pricePrecision,omitempty"` // derived: -log10(tick)
 	QuantityPrecision int `json:"quantityPrecision,omitempty"`
-
-	// Extra carries venue-specific market metadata with no first-class field
-	// (e.g. Binance PERCENT_PRICE bands, MAX_NUM_ORDERS) instead of dropping it.
-	Extra map[string]any `json:"extra,omitempty"`
 }
 
 // Key returns the canonical market identity: assetType + raw venue symbol.
